@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mydatabase
+    username: myuser
+    password: Password1!
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: true
+  mail:
+    host: smtp.example.com
+    from: noreply@example.com
+    port: 587
+    username: noreply@example.com
+    password: secret
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: false
+          starttls:
+            enable: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: rabbitmq
+    password: Password1!
+    virtual-host: /
+
+application:
+  frontend:
+    url: http://localhost:4200
+  security:
+    jwt:
+      secret-key: your-secret-key
+      expiration: 86400000 # 1 day
+      refresh-token:
+        expiration: 604800000 # 7 days
+      reset-password:
+        expiration: 900000 # 15 minutes
