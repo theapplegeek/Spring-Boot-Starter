@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import it.theapplegeek.spring_starter_pack.model.Role;
+import it.theapplegeek.spring_starter_pack.role.model.Role;
 
 @Data
 @AllArgsConstructor

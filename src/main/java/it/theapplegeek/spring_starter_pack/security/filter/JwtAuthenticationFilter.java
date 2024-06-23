@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.AllArgsConstructor;
-import it.theapplegeek.spring_starter_pack.repository.TokenRepository;
+import it.theapplegeek.spring_starter_pack.token.repository.TokenRepository;
 import it.theapplegeek.spring_starter_pack.security.service.JwtService;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

@@ -1,7 +1,7 @@
 package it.theapplegeek.spring_starter_pack.security;
 
 import lombok.AllArgsConstructor;
-import it.theapplegeek.spring_starter_pack.repository.UserRepository;
+import it.theapplegeek.spring_starter_pack.user.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
