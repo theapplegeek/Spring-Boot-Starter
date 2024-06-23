@@ -9,14 +9,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 public class PagedRequestParams {
-  @Builder.Default private int page = 0;
-  @Builder.Default private int size = 10;
+
   private String sort;
+
   @Builder.Default private String direction = Sort.DEFAULT_DIRECTION.toString();
+
+  @Builder.Default private int size = 10;
+
+  @Builder.Default private int page = 0;
 
   public Pageable asPageable() {
     if (getSort() == null) {
