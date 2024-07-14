@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: Spring Starter Pack
   datasource:
     url: jdbc:postgresql://localhost:5432/mydatabase
     username: myuser

@@ -27,6 +27,9 @@ public class EmailService {
   @Value("${spring.mail.from}")
   private String from;
 
+  @Value("${spring.application.name}")
+  private String applicationName;
+
   private final JavaMailSender emailSender;
   private final SpringTemplateEngine thymeleafTemplateEngine;
   private final RabbitTemplate rabbitTemplate;
@@ -71,10 +74,11 @@ public class EmailService {
     MimeMessageHelper helper = new MimeMessageHelper(message, true);
     helper.setFrom(from);
     helper.setTo(resetPasswordEmail.getUser().getEmail());
-    helper.setSubject("Reset your password - Contract Sender");
+    helper.setSubject("Reset your password - " + applicationName);
 
     Context thymeleafContext = new Context();
     thymeleafContext.setVariable("name", resetPasswordEmail.getUser().getName());
+    thymeleafContext.setVariable("applicationName", applicationName);
     thymeleafContext.setVariable(
         "resetLink", frontendUrl + "/reset-password?token=" + resetPasswordEmail.getToken());
     String htmlBody = thymeleafTemplateEngine.process("reset-password.html", thymeleafContext);
