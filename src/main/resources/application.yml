@@ -34,6 +34,8 @@ spring:
     username: rabbitmq
     password: Password1!
     virtual-host: /
+  thymeleaf:
+    check-template-location: false
 
 application:
   frontend:
