@@ -29,10 +29,6 @@ public class WebSecurityConfig {
             req ->
                 req.requestMatchers("/api/auth/**")
                     .permitAll()
-                    .requestMatchers("/api/user", "/api/user/**")
-                    .hasAnyAuthority("ROLE_ADMIN")
-                    .requestMatchers("/api/role", "/api/role/**")
-                    .hasAnyAuthority("ROLE_ADMIN")
                     .anyRequest()
                     .authenticated())
         .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))

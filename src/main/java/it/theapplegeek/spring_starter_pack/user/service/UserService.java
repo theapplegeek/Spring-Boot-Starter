@@ -1,5 +1,6 @@
 package it.theapplegeek.spring_starter_pack.user.service;
 
+import it.theapplegeek.spring_starter_pack.security.model.UserLogged;
 import it.theapplegeek.spring_starter_pack.user.dto.UserDto;
 import it.theapplegeek.spring_starter_pack.role.error.RoleMessage;
 import it.theapplegeek.spring_starter_pack.user.error.UserMessage;
@@ -14,6 +15,7 @@ import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedListDto;
 import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedListMapper;
 import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedRequestParams;
 import it.theapplegeek.spring_starter_pack.auth.service.AuthService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -72,6 +74,7 @@ public class UserService {
     return userMapper.toDto(userRepository.save(user));
   }
 
+  @Transactional
   public UserDto updateUser(Long userId, UserDto userDto) {
     User user =
         userRepository
@@ -99,6 +102,22 @@ public class UserService {
     if (userDto.getUsername() != null && !user.getUsername().equals(userDto.getUsername()))
       authService.revokeAllTokensOfUser(user.getId());
     return userMapper.toDto(userUpdated);
+  }
+
+  @Transactional
+  public void changePassword(UserLogged userLogged, String oldPassword, String newPassword) {
+    User user =
+        userRepository
+            .findById(userLogged.getId())
+            .orElseThrow(() -> new NotFoundException(UserMessage.USER_NOT_FOUND));
+
+    if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+      throw new BadRequestException(UserMessage.INVALID_OLD_PASSWORD);
+    }
+
+    user.setPassword(passwordEncoder.encode(newPassword));
+    userRepository.save(user);
+    authService.revokeAllTokensOfUser(user.getId());
   }
 
   public void deleteUser(Long userId) {
