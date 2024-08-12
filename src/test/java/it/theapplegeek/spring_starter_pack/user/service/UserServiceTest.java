@@ -288,7 +288,7 @@ class UserServiceTest {
   }
 
   @Test
-  void canUpdateUserWithRole() {
+  void canUpdateUserWithRoleAndSameUsernameAndSameEmail() {
     // given
     Long userId = 1L;
     RoleDto roleDto = RoleDto.builder().id(2L).build();
@@ -296,6 +296,8 @@ class UserServiceTest {
         UserDto.builder()
             .name(faker.name().firstName())
             .surname(faker.name().lastName())
+            .email(faker.internet().emailAddress())
+            .username(faker.name().username())
             .role(roleDto)
             .build();
     Role role = Role.builder().id(1L).name("user").build();
@@ -303,8 +305,8 @@ class UserServiceTest {
     User user =
         User.builder()
             .id(userId)
-            .username(faker.name().username())
-            .email(faker.internet().emailAddress())
+            .username(userDto.getUsername())
+            .email(userDto.getEmail())
             .name(userDto.getName())
             .surname(userDto.getSurname())
             .password(faker.internet().password())
@@ -314,6 +316,8 @@ class UserServiceTest {
 
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(roleRepository.findById(userDto.getRole().getId())).willReturn(Optional.of(adminRole));
+    given(userRepository.existsByUsername(userDto.getUsername())).willReturn(true);
+    given(userRepository.existsByEmail(userDto.getEmail())).willReturn(true);
     given(userMapper.partialUpdate(eq(userDto), any(User.class))).willReturn(user);
     given(userRepository.save(user)).willReturn(user);
 
@@ -324,8 +328,8 @@ class UserServiceTest {
 
     // then
     verify(userRepository, times(1)).findById(userId);
-    verify(userRepository, never()).existsByUsername(anyString());
-    verify(userRepository, never()).existsByEmail(anyString());
+    verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
+    verify(userRepository, times(1)).existsByEmail(userDto.getEmail());
     verify(roleRepository, times(1)).findById(userDto.getRole().getId());
     verify(userMapper, times(1)).partialUpdate(eq(userDto), userCaptor.capture());
     verify(userRepository, times(1)).save(user);
@@ -335,7 +339,7 @@ class UserServiceTest {
   }
 
   @Test
-  void canUpdateUserWithRoleWhenRoleIdIsNull() {
+  void canUpdateUserWithRoleWhenRoleIdIsNullAndSameUsernameAndSameEmail() {
     // given
     Long userId = 1L;
     RoleDto roleDto = RoleDto.builder().build();
@@ -343,14 +347,16 @@ class UserServiceTest {
         UserDto.builder()
             .name(faker.name().firstName())
             .surname(faker.name().lastName())
+            .username(faker.name().username())
+            .email(faker.internet().emailAddress())
             .role(roleDto)
             .build();
     Role role = Role.builder().id(1L).name("user").build();
     User user =
         User.builder()
             .id(userId)
-            .username(faker.name().username())
-            .email(faker.internet().emailAddress())
+            .username(userDto.getUsername())
+            .email(userDto.getEmail())
             .name(userDto.getName())
             .surname(userDto.getSurname())
             .password(faker.internet().password())
@@ -359,6 +365,8 @@ class UserServiceTest {
             .build();
 
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
+    given(userRepository.existsByUsername(userDto.getUsername())).willReturn(false);
+    given(userRepository.existsByEmail(userDto.getEmail())).willReturn(false);
     given(userMapper.partialUpdate(userDto, user)).willReturn(user);
     given(userRepository.save(user)).willReturn(user);
 
@@ -367,8 +375,8 @@ class UserServiceTest {
 
     // then
     verify(userRepository, times(1)).findById(userId);
-    verify(userRepository, never()).existsByUsername(anyString());
-    verify(userRepository, never()).existsByEmail(anyString());
+    verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
+    verify(userRepository, times(1)).existsByEmail(userDto.getEmail());
     verify(roleRepository, never()).findById(anyLong());
     verify(userMapper, times(1)).partialUpdate(userDto, user);
     verify(userRepository, times(1)).save(user);
@@ -394,6 +402,56 @@ class UserServiceTest {
     verify(userRepository, times(1)).findById(userId);
     verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
     verify(userRepository, never()).existsByEmail(anyString());
+    verify(roleRepository, never()).findById(anyLong());
+    verify(userMapper, never()).partialUpdate(any(UserDto.class), any(User.class));
+    verify(userRepository, never()).save(any(User.class));
+    verify(authService, never()).revokeAllTokensOfUser(anyLong());
+    verify(userMapper, never()).toDto(any(User.class));
+  }
+
+  @Test
+  void canUpdateUserWithDifferentUsernameAndNotExistingUsername() {
+    // given
+    Long userId = 1L;
+    UserDto userDto = UserDto.builder().username(faker.name().username()).build();
+    User user = User.builder().id(1L).username(faker.name().username()).build();
+    given(userRepository.findById(userId)).willReturn(Optional.of(user));
+    given(userRepository.existsByUsername(userDto.getUsername())).willReturn(false);
+    given(userMapper.partialUpdate(userDto, user)).willReturn(user);
+    given(userRepository.save(user)).willReturn(user);
+
+    // when
+    userService.updateUser(userId, userDto);
+
+    // then
+    verify(userRepository, times(1)).findById(userId);
+    verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
+    verify(userRepository, never()).existsByEmail(anyString());
+    verify(roleRepository, never()).findById(anyLong());
+    verify(userMapper, times(1)).partialUpdate(userDto, user);
+    verify(userRepository, times(1)).save(user);
+    verify(authService, times(1)).revokeAllTokensOfUser(anyLong());
+    verify(userMapper, times(1)).toDto(user);
+  }
+
+  @Test
+  void cantUpdateUserWithDifferentAndExistingEmail() {
+    // given
+    Long userId = 1L;
+    UserDto userDto = UserDto.builder().email(faker.internet().emailAddress()).build();
+    User user = User.builder().email(faker.internet().emailAddress()).build();
+    given(userRepository.findById(userId)).willReturn(Optional.of(user));
+    given(userRepository.existsByEmail(userDto.getEmail())).willReturn(true);
+
+    // when
+    // then
+    assertThrows(
+        BadRequestException.class,
+        () -> userService.updateUser(userId, userDto),
+        UserMessage.EMAIL_ALREADY_EXISTS);
+    verify(userRepository, times(1)).findById(userId);
+    verify(userRepository, never()).existsByUsername(anyString());
+    verify(userRepository, times(1)).existsByEmail(userDto.getEmail());
     verify(roleRepository, never()).findById(anyLong());
     verify(userMapper, never()).partialUpdate(any(UserDto.class), any(User.class));
     verify(userRepository, never()).save(any(User.class));
