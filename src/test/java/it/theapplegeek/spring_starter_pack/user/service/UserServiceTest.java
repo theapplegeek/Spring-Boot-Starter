@@ -13,6 +13,7 @@ import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedRequestPa
 import it.theapplegeek.spring_starter_pack.role.dto.RoleDto;
 import it.theapplegeek.spring_starter_pack.role.model.Role;
 import it.theapplegeek.spring_starter_pack.role.repository.RoleRepository;
+import it.theapplegeek.spring_starter_pack.security.model.UserLogged;
 import it.theapplegeek.spring_starter_pack.user.dto.UserDto;
 import it.theapplegeek.spring_starter_pack.user.error.UserMessage;
 import it.theapplegeek.spring_starter_pack.user.mapper.UserMapper;
@@ -457,5 +458,68 @@ class UserServiceTest {
     verify(userRepository, never()).save(any(User.class));
     verify(authService, never()).revokeAllTokensOfUser(anyLong());
     verify(userMapper, never()).toDto(any(User.class));
+  }
+
+  @Test
+  void canChangePassword() {
+    // given
+    Long userId = 1L;
+    UserLogged userLogged = UserLogged.builder().id(userId).build();
+    String oldPassword = faker.internet().password();
+    String newPassword = faker.internet().password();
+    User user = User.builder().id(userId).password(oldPassword).build();
+    given(userRepository.findById(userId)).willReturn(Optional.of(user));
+    given(passwordEncoder.matches(oldPassword, user.getPassword())).willReturn(true);
+    given(passwordEncoder.encode(newPassword)).willReturn(newPassword);
+
+    // when
+    userService.changePassword(userLogged, oldPassword, newPassword);
+
+    ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+
+    // then
+    verify(userRepository, times(1)).findById(userId);
+    verify(passwordEncoder, times(1)).encode(newPassword);
+    verify(userRepository, times(1)).save(userCaptor.capture());
+    verify(authService, times(1)).revokeAllTokensOfUser(userId);
+    assertEquals(newPassword, userCaptor.getValue().getPassword());
+  }
+
+  @Test
+  void cantChangePasswordWithWrongOldPassword() {
+    // given
+    Long userId = 1L;
+    UserLogged userLogged = UserLogged.builder().id(userId).build();
+    String oldPassword = faker.internet().password();
+    String newPassword = faker.internet().password();
+    User user = User.builder().id(userId).password(faker.internet().password()).build();
+    given(userRepository.findById(userId)).willReturn(Optional.of(user));
+    given(passwordEncoder.matches(oldPassword, user.getPassword())).willReturn(false);
+
+    // when
+    // then
+    assertThrows(
+        BadRequestException.class,
+        () -> userService.changePassword(userLogged, oldPassword, newPassword),
+        UserMessage.INVALID_OLD_PASSWORD);
+    verify(userRepository, times(1)).findById(userId);
+    verify(passwordEncoder, never()).encode(newPassword);
+    verify(userRepository, never()).save(any(User.class));
+    verify(authService, never()).revokeAllTokensOfUser(userId);
+  }
+
+  @Test
+  void canDeleteUser() {
+    // given
+    Long userId = 1L;
+    User user = User.builder().id(userId).build();
+    given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+    // when
+    userService.deleteUser(userId);
+
+    // then
+    verify(userRepository, times(1)).findById(userId);
+    verify(userRepository, times(1)).delete(user);
   }
 }
