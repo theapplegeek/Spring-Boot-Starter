@@ -52,6 +52,7 @@ public class EmailService {
     try {
       log.info("Sending email: " + simpleEmail.getTo());
       SimpleMailMessage message = new SimpleMailMessage();
+      message.setFrom(from);
       message.setTo(simpleEmail.getTo());
       if (simpleEmail.getCc() != null && !simpleEmail.getCc().isEmpty()) {
         message.setCc(simpleEmail.getCc().toArray(new String[0]));
