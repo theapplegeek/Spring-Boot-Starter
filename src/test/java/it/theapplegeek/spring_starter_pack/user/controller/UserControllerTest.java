@@ -1,23 +1,23 @@
 package it.theapplegeek.spring_starter_pack.user.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
 import it.theapplegeek.spring_starter_pack.common.payload.JwtResponse;
 import it.theapplegeek.spring_starter_pack.common.payload.LoginRequest;
+import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedListDto;
 import it.theapplegeek.spring_starter_pack.role.dto.RoleDto;
 import it.theapplegeek.spring_starter_pack.user.dto.UserDto;
 import it.theapplegeek.spring_starter_pack.user.mapper.UserMapper;
 import it.theapplegeek.spring_starter_pack.user.model.User;
 import it.theapplegeek.spring_starter_pack.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import java.util.Map;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -25,21 +25,20 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.assertj.MockMvcTester;
+import org.springframework.test.web.servlet.assertj.MvcTestResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.Map;
-
 @Log
 @Testcontainers
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@AutoConfigureMockMvc()
+@AutoConfigureTestDatabase
+@AutoConfigureMockMvc
 class UserControllerTest {
   @Container @ServiceConnection
   static PostgreSQLContainer<?> postgreSQLContainer =
@@ -48,7 +47,7 @@ class UserControllerTest {
           .withPassword("Password1!")
           .withInitScript("db/data.sql");
 
-  @Autowired MockMvc mvc;
+  @Autowired MockMvcTester mvc;
   @Autowired ObjectMapper mapper;
   @Autowired UserRepository userRepository;
   @Autowired UserMapper userMapper;
@@ -61,14 +60,20 @@ class UserControllerTest {
 
     LoginRequest loginRequest = new LoginRequest("admin", "Password");
 
-    MvcResult loginResult =
-        mvc.perform(
-                post("/api/auth/login")
-                    .content(mapper.writeValueAsString(loginRequest))
-                    .contentType(MediaType.APPLICATION_JSON))
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andReturn();
+    MvcTestResult loginResult =
+        mvc.post()
+            .uri("/api/auth/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsString(loginRequest))
+            .exchange();
+
+    assertThat(loginResult).hasStatusOk();
+    assertThat(loginResult)
+        .bodyJson()
+        .convertTo(JwtResponse.class)
+        .satisfies(jwtResponse -> assertThat(jwtResponse.getAccessToken()).isNotNull());
+
+    adminAccessToken = loginResult.getResponse().getContentAsString();
 
     adminAccessToken =
         mapper
@@ -90,7 +95,6 @@ class UserControllerTest {
   }
 
   @Test
-  @SneakyThrows
   @WithMockUser(
       username = "admin",
       authorities = {"ROLE_ADMIN"})
@@ -98,34 +102,51 @@ class UserControllerTest {
     UserDto admin = userMapper.toDto(userRepository.findByUsername("admin").orElseThrow());
     UserDto user = userMapper.toDto(userRepository.findByUsername("user").orElseThrow());
 
-    mvc.perform(
-            post("/api/user/list")
-                .param("page", "0")
-                .param("size", "10")
-                .param("sort", "username")
-                .param("direction", "asc"))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.total").value(2))
-        .andExpect(jsonPath("$.totalPages").value(1))
-        .andExpect(jsonPath("$.page").value(0))
-        .andExpect(jsonPath("$.perPage").value(10))
-        .andExpect(jsonPath("$.data").isArray())
-        .andExpect(jsonPath("$.data").isNotEmpty())
-        .andExpect(jsonPath("$.data[0].id").value(admin.getId()))
-        .andExpect(jsonPath("$.data[0].username").value(admin.getUsername()))
-        .andExpect(jsonPath("$.data[0].name").value(admin.getName()))
-        .andExpect(jsonPath("$.data[0].surname").value(admin.getSurname()))
-        .andExpect(jsonPath("$.data[0].email").value(admin.getEmail()))
-        .andExpect(jsonPath("$.data[0].role.id").value(admin.getRole().getId()))
-        .andExpect(jsonPath("$.data[0].role.name").value(admin.getRole().getName()))
-        .andExpect(jsonPath("$.data[1].id").value(user.getId()))
-        .andExpect(jsonPath("$.data[1].username").value(user.getUsername()))
-        .andExpect(jsonPath("$.data[1].name").value(user.getName()))
-        .andExpect(jsonPath("$.data[1].surname").value(user.getSurname()))
-        .andExpect(jsonPath("$.data[1].email").value(user.getEmail()))
-        .andExpect(jsonPath("$.data[1].role.id").value(user.getRole().getId()))
-        .andExpect(jsonPath("$.data[1].role.name").value(user.getRole().getName()));
+    MvcTestResult result =
+        mvc.post()
+            .uri("/api/user/list")
+            .param("page", "0")
+            .param("size", "10")
+            .param("sort", "username")
+            .param("direction", "asc")
+            .exchange();
+
+    assertThat(result).hasStatusOk();
+    assertThat(result)
+        .bodyJson()
+        .convertTo(PagedListDto.class)
+        .satisfies(
+            pagedListDto -> {
+              assertThat(pagedListDto.getTotal()).isEqualTo(2);
+              assertThat(pagedListDto.getTotalPages()).isEqualTo(1);
+              assertThat(pagedListDto.getPage()).isEqualTo(0);
+              assertThat(pagedListDto.getPerPage()).isEqualTo(10);
+            });
+    assertThat(result)
+        .bodyJson()
+        .extractingPath("$.data")
+        .convertTo(InstanceOfAssertFactories.list(UserDto.class))
+        .hasSize(2)
+        .satisfies(
+            userDtoList -> {
+              assertThat(userDtoList.getFirst().getId()).isEqualTo(admin.getId());
+              assertThat(userDtoList.getFirst().getUsername()).isEqualTo(admin.getUsername());
+              assertThat(userDtoList.getFirst().getName()).isEqualTo(admin.getName());
+              assertThat(userDtoList.getFirst().getSurname()).isEqualTo(admin.getSurname());
+              assertThat(userDtoList.getFirst().getEmail()).isEqualTo(admin.getEmail());
+              assertThat(userDtoList.getFirst().getRole().getId())
+                  .isEqualTo(admin.getRole().getId());
+              assertThat(userDtoList.getFirst().getRole().getName())
+                  .isEqualTo(admin.getRole().getName());
+              assertThat(userDtoList.getLast().getId()).isEqualTo(user.getId());
+              assertThat(userDtoList.getLast().getUsername()).isEqualTo(user.getUsername());
+              assertThat(userDtoList.getLast().getName()).isEqualTo(user.getName());
+              assertThat(userDtoList.getLast().getSurname()).isEqualTo(user.getSurname());
+              assertThat(userDtoList.getLast().getEmail()).isEqualTo(user.getEmail());
+              assertThat(userDtoList.getLast().getRole().getId()).isEqualTo(user.getRole().getId());
+              assertThat(userDtoList.getLast().getRole().getName())
+                  .isEqualTo(user.getRole().getName());
+            });
   }
 
   @Test
@@ -145,29 +166,45 @@ class UserControllerTest {
             .enabled(true)
             .build();
 
-    mvc.perform(
-            post("/api/user/list")
-                .param("page", "0")
-                .param("size", "10")
-                .param("sort", "username")
-                .param("direction", "asc")
-                .content(mapper.writeValueAsString(filter))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.total").value(1))
-        .andExpect(jsonPath("$.totalPages").value(1))
-        .andExpect(jsonPath("$.page").value(0))
-        .andExpect(jsonPath("$.perPage").value(10))
-        .andExpect(jsonPath("$.data").isArray())
-        .andExpect(jsonPath("$.data").isNotEmpty())
-        .andExpect(jsonPath("$.data[0].id").value(admin.getId()))
-        .andExpect(jsonPath("$.data[0].username").value(admin.getUsername()))
-        .andExpect(jsonPath("$.data[0].name").value(admin.getName()))
-        .andExpect(jsonPath("$.data[0].surname").value(admin.getSurname()))
-        .andExpect(jsonPath("$.data[0].email").value(admin.getEmail()))
-        .andExpect(jsonPath("$.data[0].role.id").value(admin.getRole().getId()))
-        .andExpect(jsonPath("$.data[0].role.name").value(admin.getRole().getName()));
+    MvcTestResult result =
+        mvc.post()
+            .uri("/api/user/list")
+            .param("page", "0")
+            .param("size", "10")
+            .param("sort", "username")
+            .param("direction", "asc")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsString(filter))
+            .exchange();
+
+    assertThat(result).hasStatusOk();
+    assertThat(result)
+        .bodyJson()
+        .convertTo(PagedListDto.class)
+        .satisfies(
+            pagedListDto -> {
+              assertThat(pagedListDto.getTotal()).isEqualTo(1);
+              assertThat(pagedListDto.getTotalPages()).isEqualTo(1);
+              assertThat(pagedListDto.getPage()).isEqualTo(0);
+              assertThat(pagedListDto.getPerPage()).isEqualTo(10);
+            });
+    assertThat(result)
+        .bodyJson()
+        .extractingPath("$.data")
+        .convertTo(InstanceOfAssertFactories.list(UserDto.class))
+        .hasSize(1)
+        .satisfies(
+            userDtoList -> {
+              assertThat(userDtoList.getFirst().getId()).isEqualTo(admin.getId());
+              assertThat(userDtoList.getFirst().getUsername()).isEqualTo(admin.getUsername());
+              assertThat(userDtoList.getFirst().getName()).isEqualTo(admin.getName());
+              assertThat(userDtoList.getFirst().getSurname()).isEqualTo(admin.getSurname());
+              assertThat(userDtoList.getFirst().getEmail()).isEqualTo(admin.getEmail());
+              assertThat(userDtoList.getFirst().getRole().getId())
+                  .isEqualTo(admin.getRole().getId());
+              assertThat(userDtoList.getFirst().getRole().getName())
+                  .isEqualTo(admin.getRole().getName());
+            });
   }
 
   @Test
@@ -178,22 +215,33 @@ class UserControllerTest {
   void shouldNotGetUserWithWrongFilter() {
     UserDto filter = UserDto.builder().username("wrong").build();
 
-    mvc.perform(
-            post("/api/user/list")
-                .param("page", "0")
-                .param("size", "10")
-                .param("sort", "username")
-                .param("direction", "asc")
-                .content(mapper.writeValueAsString(filter))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.total").value(0))
-        .andExpect(jsonPath("$.totalPages").value(0))
-        .andExpect(jsonPath("$.page").value(0))
-        .andExpect(jsonPath("$.perPage").value(10))
-        .andExpect(jsonPath("$.data").isArray())
-        .andExpect(jsonPath("$.data").isEmpty());
+    MvcTestResult result =
+        mvc.post()
+            .uri("/api/user/list")
+            .param("page", "0")
+            .param("size", "10")
+            .param("sort", "username")
+            .param("direction", "asc")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsString(filter))
+            .exchange();
+
+    assertThat(result).hasStatusOk();
+    assertThat(result)
+        .bodyJson()
+        .convertTo(PagedListDto.class)
+        .satisfies(
+            pagedListDto -> {
+              assertThat(pagedListDto.getTotal()).isEqualTo(0);
+              assertThat(pagedListDto.getTotalPages()).isEqualTo(0);
+              assertThat(pagedListDto.getPage()).isEqualTo(0);
+              assertThat(pagedListDto.getPerPage()).isEqualTo(10);
+            });
+    assertThat(result)
+        .bodyJson()
+        .extractingPath("$.data")
+        .convertTo(InstanceOfAssertFactories.list(UserDto.class))
+        .isEmpty();
   }
 
   @Test
@@ -205,19 +253,23 @@ class UserControllerTest {
   void shouldAddUser() {
     UserDto userDto = generateUserDto();
 
-    mvc.perform(
-            post("/api/user")
-                .content(mapper.writeValueAsString(userDto))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").isNumber())
-        .andExpect(jsonPath("$.username").value(userDto.getUsername()))
-        .andExpect(jsonPath("$.name").value(userDto.getName()))
-        .andExpect(jsonPath("$.surname").value(userDto.getSurname()))
-        .andExpect(jsonPath("$.enabled").value(userDto.getEnabled()))
-        .andExpect(jsonPath("$.email").value(userDto.getEmail()))
-        .andExpect(jsonPath("$.role.id").value(userDto.getRole().getId()));
+    assertThat(
+            mvc.post()
+                .uri("/api/user")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(userDto)))
+        .hasStatusOk()
+        .bodyJson()
+        .convertTo(UserDto.class)
+        .satisfies(
+            user -> {
+              assertThat(user.getId()).isNotNull();
+              assertThat(user.getUsername()).isEqualTo(userDto.getUsername());
+              assertThat(user.getName()).isEqualTo(userDto.getName());
+              assertThat(user.getSurname()).isEqualTo(userDto.getSurname());
+              assertThat(user.getEmail()).isEqualTo(userDto.getEmail());
+              assertThat(user.getRole().getId()).isEqualTo(userDto.getRole().getId());
+            });
   }
 
   @Test
@@ -228,12 +280,12 @@ class UserControllerTest {
   void shouldNotAddUserWithWrongData() {
     UserDto userDto = UserDto.builder().build();
 
-    mvc.perform(
-            post("/api/user")
-                .content(mapper.writeValueAsString(userDto))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isBadRequest());
+    assertThat(
+            mvc.post()
+                .uri("/api/user")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(userDto)))
+        .hasStatus(HttpStatus.BAD_REQUEST);
   }
 
   @Test
@@ -245,12 +297,12 @@ class UserControllerTest {
     UserDto userDto = generateUserDto();
     userDto.setEmail("wrongFormat");
 
-    mvc.perform(
-            post("/api/user")
-                .content(mapper.writeValueAsString(userDto))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isBadRequest());
+    assertThat(
+            mvc.post()
+                .uri("/api/user")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(userDto)))
+        .hasStatus(HttpStatus.BAD_REQUEST);
   }
 
   @Test
@@ -262,12 +314,12 @@ class UserControllerTest {
     UserDto userDto = generateUserDto();
     userDto.setRole(RoleDto.builder().id(3L).name("wrong").build());
 
-    mvc.perform(
-            post("/api/user")
-                .content(mapper.writeValueAsString(userDto))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isNotFound());
+    assertThat(
+            mvc.post()
+                .uri("/api/user")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(userDto)))
+        .hasStatus(HttpStatus.NOT_FOUND);
   }
 
   @Test
@@ -279,12 +331,12 @@ class UserControllerTest {
     UserDto userDto = generateUserDto();
     userDto.setUsername("admin");
 
-    mvc.perform(
-            post("/api/user")
-                .content(mapper.writeValueAsString(userDto))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isBadRequest());
+    assertThat(
+            mvc.post()
+                .uri("/api/user")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(userDto)))
+        .hasStatus(HttpStatus.BAD_REQUEST);
   }
 
   @Test
@@ -296,12 +348,12 @@ class UserControllerTest {
     UserDto userDto = generateUserDto();
     userDto.setEmail("admin@mail.com");
 
-    mvc.perform(
-            post("/api/user")
-                .content(mapper.writeValueAsString(userDto))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isBadRequest());
+    assertThat(
+            mvc.post()
+                .uri("/api/user")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(userDto)))
+        .hasStatus(HttpStatus.BAD_REQUEST);
   }
 
   @Test
@@ -323,19 +375,24 @@ class UserControllerTest {
             .enabled(false)
             .build();
 
-    mvc.perform(
-            put("/api/user/{id}", admin.getId())
-                .content(mapper.writeValueAsString(adminDto))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(admin.getId()))
-        .andExpect(jsonPath("$.username").value(adminDto.getUsername()))
-        .andExpect(jsonPath("$.name").value(adminDto.getName()))
-        .andExpect(jsonPath("$.surname").value(adminDto.getSurname()))
-        .andExpect(jsonPath("$.enabled").value(adminDto.getEnabled()))
-        .andExpect(jsonPath("$.email").value(adminDto.getEmail()))
-        .andExpect(jsonPath("$.role.id").value(adminDto.getRole().getId()));
+    assertThat(
+            mvc.put()
+                .uri("/api/user/{id}", admin.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(adminDto)))
+        .hasStatusOk()
+        .bodyJson()
+        .convertTo(UserDto.class)
+        .satisfies(
+            user -> {
+              assertThat(user.getId()).isEqualTo(admin.getId());
+              assertThat(user.getUsername()).isEqualTo(adminDto.getUsername());
+              assertThat(user.getName()).isEqualTo(adminDto.getName());
+              assertThat(user.getSurname()).isEqualTo(adminDto.getSurname());
+              assertThat(user.getEmail()).isEqualTo(adminDto.getEmail());
+              assertThat(user.getRole().getId()).isEqualTo(adminDto.getRole().getId());
+              assertThat(user.getEnabled()).isEqualTo(adminDto.getEnabled());
+            });
 
     User updated = userRepository.findByUsername("newAdmin").orElseThrow();
     assertEquals(updated.getPassword(), admin.getPassword());
@@ -349,9 +406,9 @@ class UserControllerTest {
   void shouldNotUpdateUserWithoutData() {
     User admin = userRepository.findByUsername("admin").orElseThrow();
 
-    mvc.perform(put("/api/user/{id}", admin.getId()).contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isBadRequest());
+    assertThat(
+            mvc.put().uri("/api/user/{id}", admin.getId()).contentType(MediaType.APPLICATION_JSON))
+        .hasStatus(HttpStatus.BAD_REQUEST);
   }
 
   @Test
@@ -362,12 +419,12 @@ class UserControllerTest {
   void shouldNotUpdateUserWithNotExistingUser() {
     UserDto adminDto = generateUserDto();
 
-    mvc.perform(
-            put("/api/user/{id}", 1000)
-                .content(mapper.writeValueAsString(adminDto))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isNotFound());
+    assertThat(
+            mvc.put()
+                .uri("/api/user/{id}", 1000)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(adminDto)))
+        .hasStatus(HttpStatus.NOT_FOUND);
   }
 
   @Test
@@ -380,12 +437,12 @@ class UserControllerTest {
     UserDto adminDto = generateUserDto();
     adminDto.setUsername("user");
 
-    mvc.perform(
-            put("/api/user/{id}", admin.getId())
-                .content(mapper.writeValueAsString(adminDto))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isBadRequest());
+    assertThat(
+            mvc.put()
+                .uri("/api/user/{id}", admin.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(adminDto)))
+        .hasStatus(HttpStatus.BAD_REQUEST);
   }
 
   @Test
@@ -398,12 +455,12 @@ class UserControllerTest {
     UserDto adminDto = generateUserDto();
     adminDto.setEmail("user@mail.com");
 
-    mvc.perform(
-            put("/api/user/{id}", admin.getId())
-                .content(mapper.writeValueAsString(adminDto))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isBadRequest());
+    assertThat(
+            mvc.put()
+                .uri("/api/user/{id}", admin.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(adminDto)))
+        .hasStatus(HttpStatus.BAD_REQUEST);
   }
 
   @Test
@@ -416,12 +473,12 @@ class UserControllerTest {
     UserDto adminDto = generateUserDto();
     adminDto.setRole(RoleDto.builder().id(3L).name("wrong").build());
 
-    mvc.perform(
-            put("/api/user/{id}", admin.getId())
-                .content(mapper.writeValueAsString(adminDto))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isNotFound());
+    assertThat(
+            mvc.put()
+                .uri("/api/user/{id}", admin.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(adminDto)))
+        .hasStatus(HttpStatus.NOT_FOUND);
   }
 
   @Test
@@ -435,13 +492,13 @@ class UserControllerTest {
     HttpHeaders headers = new HttpHeaders();
     headers.add("Authorization", "Bearer " + token);
 
-    mvc.perform(
-            put("/api/user/change-password")
+    assertThat(
+            mvc.put()
+                .uri("/api/user/change-password")
                 .headers(headers)
-                .content(mapper.writeValueAsString(data))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isOk());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(data)))
+        .hasStatusOk();
 
     User updated = userRepository.findByUsername("admin").orElseThrow();
     assertNotEquals(updated.getPassword(), admin.getPassword());
@@ -458,13 +515,13 @@ class UserControllerTest {
     HttpHeaders headers = new HttpHeaders();
     headers.add("Authorization", "Bearer " + token);
 
-    mvc.perform(
-            put("/api/user/change-password")
+    assertThat(
+            mvc.put()
+                .uri("/api/user/change-password")
                 .headers(headers)
-                .content(mapper.writeValueAsString(data))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isBadRequest());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(data)))
+        .hasStatus(HttpStatus.BAD_REQUEST);
   }
 
   @Test
@@ -477,13 +534,13 @@ class UserControllerTest {
     HttpHeaders headers = new HttpHeaders();
     headers.add("Authorization", "Bearer " + token);
 
-    mvc.perform(
-            put("/api/user/change-password")
+    assertThat(
+            mvc.put()
+                .uri("/api/user/change-password")
                 .headers(headers)
-                .content(mapper.writeValueAsString(data))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isBadRequest());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(data)))
+        .hasStatus(HttpStatus.BAD_REQUEST);
   }
 
   @Test
@@ -496,13 +553,13 @@ class UserControllerTest {
     HttpHeaders headers = new HttpHeaders();
     headers.add("Authorization", "Bearer " + token);
 
-    mvc.perform(
-            put("/api/user/change-password")
+    assertThat(
+            mvc.put()
+                .uri("/api/user/change-password")
                 .headers(headers)
-                .content(mapper.writeValueAsString(data))
-                .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isBadRequest());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(data)))
+        .hasStatus(HttpStatus.BAD_REQUEST);
   }
 
   @Test
@@ -514,8 +571,7 @@ class UserControllerTest {
   void shouldDeleteUser() {
     User user = userRepository.findByUsername("user").orElseThrow();
 
-    mvc.perform(delete("/api/user/{id}", user.getId())).andDo(print()).andExpect(status().isOk());
-
+    assertThat(mvc.delete().uri("/api/user/{id}", user.getId())).hasStatusOk();
     assertTrue(userRepository.findByUsername("user").isEmpty());
   }
 
@@ -525,6 +581,6 @@ class UserControllerTest {
       username = "admin",
       authorities = {"ROLE_ADMIN"})
   void shouldNotDeleteNotExistingUser() {
-    mvc.perform(delete("/api/user/{id}", 1000)).andDo(print()).andExpect(status().isNotFound());
+    assertThat(mvc.delete().uri("/api/user/{id}", 1000)).hasStatus(HttpStatus.NOT_FOUND);
   }
 }
