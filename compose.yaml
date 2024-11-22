@@ -9,7 +9,7 @@ services:
       - POSTGRES_USER=myuser
       - POSTGRES_PASSWORD=Password1!
     ports:
-      - 5432:5432
+      - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
 
@@ -19,7 +19,7 @@ services:
       - RABBITMQ_DEFAULT_USER=rabbitmq
       - RABBITMQ_DEFAULT_PASS=Password1!
     ports:
-      - 5672:5672
-      - 15672:15672
+      - "5672:5672"
+      - "15672:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
