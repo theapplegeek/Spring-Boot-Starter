@@ -14,6 +14,8 @@ import it.theapplegeek.spring_starter_pack.user.mapper.UserMapper;
 import it.theapplegeek.spring_starter_pack.user.model.User;
 import it.theapplegeek.spring_starter_pack.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
@@ -89,15 +91,16 @@ class UserControllerTest {
         .surname(faker.name().lastName())
         .email(faker.internet().emailAddress())
         .password(faker.internet().password())
-        .role(RoleDto.builder().id(faker.number().numberBetween(1L, 2L)).build())
+        .roles(List.of(RoleDto.builder().id(faker.number().numberBetween(1L, 2L)).build()))
         .enabled(true)
         .build();
   }
 
   @Test
+  @Transactional
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_READ"})
   void shouldGetAllUsers() {
     UserDto admin = userMapper.toDto(userRepository.findByUsername("admin").orElseThrow());
     UserDto user = userMapper.toDto(userRepository.findByUsername("user").orElseThrow());
@@ -134,26 +137,29 @@ class UserControllerTest {
               assertThat(userDtoList.getFirst().getName()).isEqualTo(admin.getName());
               assertThat(userDtoList.getFirst().getSurname()).isEqualTo(admin.getSurname());
               assertThat(userDtoList.getFirst().getEmail()).isEqualTo(admin.getEmail());
-              assertThat(userDtoList.getFirst().getRole().getId())
-                  .isEqualTo(admin.getRole().getId());
-              assertThat(userDtoList.getFirst().getRole().getName())
-                  .isEqualTo(admin.getRole().getName());
+              assertThat(userDtoList.getFirst().getRoles().size()).isEqualTo(1);
+              assertThat(userDtoList.getFirst().getRoles().getFirst().getId())
+                  .isEqualTo(admin.getRoles().getFirst().getId());
+              assertThat(userDtoList.getFirst().getRoles().getFirst().getName())
+                  .isEqualTo(admin.getRoles().getFirst().getName());
               assertThat(userDtoList.getLast().getId()).isEqualTo(user.getId());
               assertThat(userDtoList.getLast().getUsername()).isEqualTo(user.getUsername());
               assertThat(userDtoList.getLast().getName()).isEqualTo(user.getName());
               assertThat(userDtoList.getLast().getSurname()).isEqualTo(user.getSurname());
               assertThat(userDtoList.getLast().getEmail()).isEqualTo(user.getEmail());
-              assertThat(userDtoList.getLast().getRole().getId()).isEqualTo(user.getRole().getId());
-              assertThat(userDtoList.getLast().getRole().getName())
-                  .isEqualTo(user.getRole().getName());
+              assertThat(userDtoList.getLast().getRoles().getFirst().getId())
+                  .isEqualTo(user.getRoles().getFirst().getId());
+              assertThat(userDtoList.getLast().getRoles().getFirst().getName())
+                  .isEqualTo(user.getRoles().getFirst().getName());
             });
   }
 
   @Test
   @SneakyThrows
+  @Transactional
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_READ"})
   void shouldGetAdminUserWithFilter() {
     UserDto admin = userMapper.toDto(userRepository.findByUsername("admin").orElseThrow());
     UserDto filter =
@@ -162,7 +168,7 @@ class UserControllerTest {
             .email(admin.getEmail())
             .name(admin.getName())
             .surname(admin.getSurname())
-            .role(admin.getRole())
+            .roles(List.of(RoleDto.builder().id(admin.getRoles().getFirst().getId()).build()))
             .enabled(true)
             .build();
 
@@ -200,10 +206,10 @@ class UserControllerTest {
               assertThat(userDtoList.getFirst().getName()).isEqualTo(admin.getName());
               assertThat(userDtoList.getFirst().getSurname()).isEqualTo(admin.getSurname());
               assertThat(userDtoList.getFirst().getEmail()).isEqualTo(admin.getEmail());
-              assertThat(userDtoList.getFirst().getRole().getId())
-                  .isEqualTo(admin.getRole().getId());
-              assertThat(userDtoList.getFirst().getRole().getName())
-                  .isEqualTo(admin.getRole().getName());
+              assertThat(userDtoList.getFirst().getRoles().getFirst().getId())
+                  .isEqualTo(admin.getRoles().getFirst().getId());
+              assertThat(userDtoList.getFirst().getRoles().getFirst().getName())
+                  .isEqualTo(admin.getRoles().getFirst().getName());
             });
   }
 
@@ -211,7 +217,7 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_READ"})
   void shouldNotGetUserWithWrongFilter() {
     UserDto filter = UserDto.builder().username("wrong").build();
 
@@ -249,7 +255,7 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_CREATE"})
   void shouldAddUser() {
     UserDto userDto = generateUserDto();
 
@@ -268,7 +274,8 @@ class UserControllerTest {
               assertThat(user.getName()).isEqualTo(userDto.getName());
               assertThat(user.getSurname()).isEqualTo(userDto.getSurname());
               assertThat(user.getEmail()).isEqualTo(userDto.getEmail());
-              assertThat(user.getRole().getId()).isEqualTo(userDto.getRole().getId());
+              assertThat(user.getRoles().getFirst().getId())
+                  .isEqualTo(userDto.getRoles().getFirst().getId());
             });
   }
 
@@ -276,7 +283,7 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_CREATE"})
   void shouldNotAddUserWithWrongData() {
     UserDto userDto = UserDto.builder().build();
 
@@ -292,7 +299,7 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_CREATE"})
   void shouldNotAddUserWithWrongEmail() {
     UserDto userDto = generateUserDto();
     userDto.setEmail("wrongFormat");
@@ -309,24 +316,24 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_CREATE"})
   void shouldNotAddUserWithWrongRole() {
     UserDto userDto = generateUserDto();
-    userDto.setRole(RoleDto.builder().id(3L).name("wrong").build());
+    userDto.setRoles(List.of(RoleDto.builder().id(3L).name("wrong").build()));
 
     assertThat(
             mvc.post()
                 .uri("/api/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(userDto)))
-        .hasStatus(HttpStatus.NOT_FOUND);
+        .hasStatus(HttpStatus.BAD_REQUEST);
   }
 
   @Test
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_CREATE"})
   void shouldNotAddUserWithExistingUsername() {
     UserDto userDto = generateUserDto();
     userDto.setUsername("admin");
@@ -343,7 +350,7 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_CREATE"})
   void shouldNotAddUserWithExistingEmail() {
     UserDto userDto = generateUserDto();
     userDto.setEmail("admin@mail.com");
@@ -361,9 +368,11 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_UPDATE"})
   void shouldUpdateUser() {
     User admin = userRepository.findByUsername("admin").orElseThrow();
+    List<RoleDto> roles = new ArrayList<>();
+    roles.add(RoleDto.builder().id(2L).build());
     UserDto adminDto =
         UserDto.builder()
             .username("newAdmin")
@@ -371,7 +380,7 @@ class UserControllerTest {
             .surname("newSurname")
             .email("newAdmin@mail.com")
             .password("newPassword123!")
-            .role(RoleDto.builder().id(2L).build())
+            .roles(roles)
             .enabled(false)
             .build();
 
@@ -390,7 +399,8 @@ class UserControllerTest {
               assertThat(user.getName()).isEqualTo(adminDto.getName());
               assertThat(user.getSurname()).isEqualTo(adminDto.getSurname());
               assertThat(user.getEmail()).isEqualTo(adminDto.getEmail());
-              assertThat(user.getRole().getId()).isEqualTo(adminDto.getRole().getId());
+              assertThat(user.getRoles().getFirst().getId())
+                  .isEqualTo(adminDto.getRoles().getFirst().getId());
               assertThat(user.getEnabled()).isEqualTo(adminDto.getEnabled());
             });
 
@@ -402,7 +412,7 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_UPDATE"})
   void shouldNotUpdateUserWithoutData() {
     User admin = userRepository.findByUsername("admin").orElseThrow();
 
@@ -415,7 +425,7 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_UPDATE"})
   void shouldNotUpdateUserWithNotExistingUser() {
     UserDto adminDto = generateUserDto();
 
@@ -431,7 +441,7 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_UPDATE"})
   void shouldNotUpdateUserWithExistingUsername() {
     User admin = userRepository.findByUsername("admin").orElseThrow();
     UserDto adminDto = generateUserDto();
@@ -449,7 +459,7 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_UPDATE"})
   void shouldNotUpdateUserWithExistingEmail() {
     User admin = userRepository.findByUsername("admin").orElseThrow();
     UserDto adminDto = generateUserDto();
@@ -467,11 +477,11 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_UPDATE"})
   void shouldNotUpdateUserWithWrongRole() {
     User admin = userRepository.findByUsername("admin").orElseThrow();
     UserDto adminDto = generateUserDto();
-    adminDto.setRole(RoleDto.builder().id(3L).name("wrong").build());
+    adminDto.setRoles(List.of(RoleDto.builder().id(3L).name("wrong").build()));
 
     assertThat(
             mvc.put()
@@ -567,7 +577,7 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_DELETE"})
   void shouldDeleteUser() {
     User user = userRepository.findByUsername("user").orElseThrow();
 
@@ -579,7 +589,7 @@ class UserControllerTest {
   @SneakyThrows
   @WithMockUser(
       username = "admin",
-      authorities = {"ROLE_ADMIN"})
+      authorities = {"USER_DELETE"})
   void shouldNotDeleteNotExistingUser() {
     assertThat(mvc.delete().uri("/api/user/{id}", 1000)).hasStatus(HttpStatus.NOT_FOUND);
   }

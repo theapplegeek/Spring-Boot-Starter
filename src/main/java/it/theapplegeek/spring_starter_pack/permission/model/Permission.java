@@ -1,30 +1,28 @@
-package it.theapplegeek.spring_starter_pack.role.model;
+package it.theapplegeek.spring_starter_pack.permission.model;
 
-import it.theapplegeek.spring_starter_pack.user.model.UserRole;
+import it.theapplegeek.spring_starter_pack.role.model.RolePermission;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 import lombok.*;
-import org.hibernate.annotations.BatchSize;
 import org.hibernate.proxy.HibernateProxy;
 
 @Getter
 @Setter
 @ToString
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @Entity
 @Table(
-    name = "role",
+    name = "permission",
     uniqueConstraints =
         @UniqueConstraint(
-            name = "UK_ROLE_NAME",
+            name = "UK_PERMISSION_NAME",
             columnNames = {"name"}))
-public class Role implements Serializable {
+public class Permission implements Serializable {
   @Id
-  @Column(name = "id")
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
@@ -32,20 +30,11 @@ public class Role implements Serializable {
   private String name;
 
   @OneToMany(
-      mappedBy = "role",
+      mappedBy = "permission",
       fetch = FetchType.LAZY,
       cascade = CascadeType.ALL,
       orphanRemoval = true)
   @ToString.Exclude
-  private List<UserRole> userRoles;
-
-  @OneToMany(
-      mappedBy = "role",
-      fetch = FetchType.LAZY,
-      cascade = CascadeType.ALL,
-      orphanRemoval = true)
-  @ToString.Exclude
-  @BatchSize(size = 100)
   private List<RolePermission> rolePermissions;
 
   @Override
@@ -61,8 +50,8 @@ public class Role implements Serializable {
             ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass()
             : this.getClass();
     if (thisEffectiveClass != oEffectiveClass) return false;
-    Role role = (Role) o;
-    return getId() != null && Objects.equals(getId(), role.getId());
+    Permission that = (Permission) o;
+    return getId() != null && Objects.equals(getId(), that.getId());
   }
 
   @Override

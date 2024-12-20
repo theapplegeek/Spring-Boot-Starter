@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/role")
 @AllArgsConstructor
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
 public class RoleController {
   private final RoleService roleService;
 
   @GetMapping
+  @PreAuthorize("hasAnyAuthority('ROLE_READ')")
   public List<RoleDto> getAllRoles() {
     return roleService.getAllRoles();
   }

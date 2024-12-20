@@ -7,9 +7,12 @@ import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedRequestPa
 import it.theapplegeek.spring_starter_pack.role.dto.RoleDto;
 import it.theapplegeek.spring_starter_pack.user.dto.UserDto;
 import it.theapplegeek.spring_starter_pack.user.model.User;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import it.theapplegeek.spring_starter_pack.user.model.UserRole;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -31,17 +34,32 @@ class UserRepositoryTest {
       new PostgreSQLContainer<>("postgres:16.3-alpine").withInitScript("db/data.sql");
 
   @Autowired UserRepository userRepository;
+  @Autowired UserRoleRepository userRoleRepository;
   final Faker faker = new Faker();
 
-  private User generateUser() {
-    return User.builder()
-        .username(faker.name().username())
-        .name(faker.name().firstName())
-        .surname(faker.name().lastName())
-        .email(faker.internet().emailAddress())
-        .password(faker.internet().password())
-        .roleId(faker.number().numberBetween(1L, 2L))
-        .build();
+  private User generateAndSaveUser() {
+    User user =
+        userRepository.save(
+            User.builder()
+                .username(faker.name().username())
+                .name(faker.name().firstName())
+                .surname(faker.name().lastName())
+                .email(faker.internet().emailAddress())
+                .password(faker.internet().password())
+                .userRoles(new ArrayList<>())
+                .build());
+
+    UserRole userRole = userRoleRepository.save(
+        UserRole.builder()
+            .id(
+                UserRole.UserRolePK.builder()
+                    .userId(user.getId())
+                    .roleId(faker.number().numberBetween(1L, 2L))
+                    .build())
+            .build());
+
+    user.getUserRoles().add(userRole);
+    return user;
   }
 
   @Test
@@ -85,7 +103,7 @@ class UserRepositoryTest {
 
   @Test
   void shouldFindAllByRoleWithSpecificationAndPageable() {
-    UserDto search = UserDto.builder().role(RoleDto.builder().id(2L).build()).build();
+    UserDto search = UserDto.builder().roles(List.of(RoleDto.builder().id(2L).build())).build();
     Pageable pageable =
         PagedRequestParams.builder()
             .page(0)
@@ -104,7 +122,8 @@ class UserRepositoryTest {
   @Test
   @Rollback
   void shouldFindAllWithPageable() {
-    userRepository.saveAll(List.of(generateUser(), generateUser()));
+    generateAndSaveUser();
+    generateAndSaveUser();
 
     Pageable pageable =
         PagedRequestParams.builder()

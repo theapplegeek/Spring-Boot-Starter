@@ -1,13 +1,13 @@
 package it.theapplegeek.spring_starter_pack.security.filter;
 
+import it.theapplegeek.spring_starter_pack.security.service.JwtService;
+import it.theapplegeek.spring_starter_pack.token.repository.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.AllArgsConstructor;
-import it.theapplegeek.spring_starter_pack.token.repository.TokenRepository;
-import it.theapplegeek.spring_starter_pack.security.service.JwtService;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,7 +20,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 @AllArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;

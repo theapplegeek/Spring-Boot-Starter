@@ -1,9 +1,9 @@
 package it.theapplegeek.spring_starter_pack.user.mapper;
 
-import it.theapplegeek.spring_starter_pack.user.dto.UserDto;
-import it.theapplegeek.spring_starter_pack.role.mapper.RoleMapper;
-import it.theapplegeek.spring_starter_pack.user.model.User;
 import it.theapplegeek.spring_starter_pack.common.util.pagination.IMapper;
+import it.theapplegeek.spring_starter_pack.role.mapper.RoleMapper;
+import it.theapplegeek.spring_starter_pack.user.dto.UserDto;
+import it.theapplegeek.spring_starter_pack.user.model.User;
 import org.mapstruct.*;
 
 @Mapper(
@@ -11,18 +11,17 @@ import org.mapstruct.*;
     componentModel = MappingConstants.ComponentModel.SPRING,
     uses = {RoleMapper.class})
 public interface UserMapper extends IMapper<UserDto, User> {
-  @Mapping(target = "id", ignore = true)
-  @Mapping(target = "role", ignore = true)
-  @Mapping(target = "roleId", source = "role.id")
-  User toEntity(UserDto userDto);
-
   @Mapping(target = "password", ignore = true)
+  @Mapping(target = "roles", source = "userRoles")
   UserDto toDto(User user);
+
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "userRoles", ignore = true)
+  User toEntity(UserDto userDto);
 
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "password", ignore = true)
-  @Mapping(target = "role", ignore = true)
-  @Mapping(target = "roleId", source = "role.id")
+  @Mapping(target = "userRoles", ignore = true)
   User partialUpdate(UserDto userDto, @MappingTarget User user);
 }

@@ -35,10 +35,10 @@ public class AuthService {
     authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
     User user = userRepository.findByUsername(request.getUsername()).orElseThrow();
-    String jwtToken = jwtService.generateToken(user);
+    String accessToken = jwtService.generateToken(user);
     String refreshToken = jwtService.generateRefreshToken(user);
-    saveUserToken(user, jwtToken);
-    return JwtResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).build();
+    saveUserToken(user, accessToken);
+    return JwtResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
   }
 
   private void saveUserToken(User user, String jwtToken) {

@@ -15,7 +15,12 @@ import org.hibernate.proxy.HibernateProxy;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "token")
+@Table(
+    name = "token",
+    uniqueConstraints =
+        @UniqueConstraint(
+            name = "UK_TOKEN",
+            columnNames = {"token"}))
 public class Token implements Serializable {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,7 +45,12 @@ public class Token implements Serializable {
   private Long userId;
 
   @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-  @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
+  @JoinColumn(
+      name = "user_id",
+      referencedColumnName = "id",
+      foreignKey = @ForeignKey(name = "FK_USER_ID"),
+      insertable = false,
+      updatable = false)
   @ToString.Exclude
   private User user;
 

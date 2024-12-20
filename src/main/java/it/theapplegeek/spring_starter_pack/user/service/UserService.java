@@ -1,21 +1,27 @@
 package it.theapplegeek.spring_starter_pack.user.service;
 
-import it.theapplegeek.spring_starter_pack.security.model.UserLogged;
-import it.theapplegeek.spring_starter_pack.user.dto.UserDto;
-import it.theapplegeek.spring_starter_pack.role.error.RoleMessage;
-import it.theapplegeek.spring_starter_pack.user.error.UserMessage;
+import it.theapplegeek.spring_starter_pack.auth.service.AuthService;
 import it.theapplegeek.spring_starter_pack.common.exception.BadRequestException;
 import it.theapplegeek.spring_starter_pack.common.exception.NotFoundException;
-import it.theapplegeek.spring_starter_pack.user.mapper.UserMapper;
-import it.theapplegeek.spring_starter_pack.role.model.Role;
-import it.theapplegeek.spring_starter_pack.user.model.User;
-import it.theapplegeek.spring_starter_pack.role.repository.RoleRepository;
-import it.theapplegeek.spring_starter_pack.user.repository.UserRepository;
 import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedListDto;
 import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedListMapper;
 import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedRequestParams;
-import it.theapplegeek.spring_starter_pack.auth.service.AuthService;
+import it.theapplegeek.spring_starter_pack.role.dto.RoleDto;
+import it.theapplegeek.spring_starter_pack.role.error.RoleMessage;
+import it.theapplegeek.spring_starter_pack.role.model.Role;
+import it.theapplegeek.spring_starter_pack.role.repository.RoleRepository;
+import it.theapplegeek.spring_starter_pack.security.model.UserLogged;
+import it.theapplegeek.spring_starter_pack.user.dto.UserDto;
+import it.theapplegeek.spring_starter_pack.user.error.UserMessage;
+import it.theapplegeek.spring_starter_pack.user.mapper.UserMapper;
+import it.theapplegeek.spring_starter_pack.user.model.User;
+import it.theapplegeek.spring_starter_pack.user.model.UserRole;
+import it.theapplegeek.spring_starter_pack.user.repository.UserRepository;
+import it.theapplegeek.spring_starter_pack.user.repository.UserRoleRepository;
 import jakarta.transaction.Transactional;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +32,7 @@ import org.springframework.stereotype.Service;
 public class UserService {
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
+  private final UserRoleRepository userRoleRepository;
   private final PagedListMapper<UserDto, User> userPagedMapper;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
@@ -53,25 +60,29 @@ public class UserService {
     if (userRepository.existsByEmail(userDto.getEmail())) {
       throw new BadRequestException(UserMessage.EMAIL_ALREADY_EXISTS);
     }
+    if (userDto.getRoles() != null && !userDto.getRoles().isEmpty()) {
+      userDto
+          .getRoles()
+          .forEach(
+              roleDto -> {
+                if (roleDto.getId() == null || !roleRepository.existsById(roleDto.getId())) {
+                  throw new BadRequestException(RoleMessage.ROLE_NOT_FOUND);
+                }
+              });
+    }
 
     User user = userMapper.toEntity(userDto);
-    if (userDto.getRole() != null && userDto.getRole().getId() != null) {
-      Role role =
-          roleRepository
-              .findById(userDto.getRole().getId())
-              .orElseThrow(() -> new NotFoundException(RoleMessage.ROLE_NOT_FOUND));
-      user.setRole(role);
-    } else {
-      Role userRole =
-          roleRepository
-              .findByName("user")
-              .orElseThrow(() -> new NotFoundException(RoleMessage.ROLE_NOT_FOUND));
-      user.setRoleId(userRole.getId());
-      user.setRole(userRole);
-    }
-    if (userDto.getEnabled() == null) user.setEnabled(true);
     user.setPassword(passwordEncoder.encode(user.getPassword()));
-    return userMapper.toDto(userRepository.save(user));
+    user = userRepository.save(user);
+
+    List<UserRole> userRoles =
+        userDto.getRoles().stream()
+            .map(convertRolesToUserRoles(user))
+            .map(userRoleRepository::save)
+            .toList();
+    user.setUserRoles(userRoles);
+
+    return userMapper.toDto(user);
   }
 
   @Transactional
@@ -90,18 +101,41 @@ public class UserService {
         && !user.getEmail().equals(userDto.getEmail())) {
       throw new BadRequestException(UserMessage.EMAIL_ALREADY_EXISTS);
     }
-    if (userDto.getRole() != null && userDto.getRole().getId() != null) {
-      Role role =
-          roleRepository
-              .findById(userDto.getRole().getId())
-              .orElseThrow(() -> new NotFoundException(RoleMessage.ROLE_NOT_FOUND));
-      user.setRole(role);
+    if (userDto.getRoles() != null && !userDto.getRoles().isEmpty()) {
+      List<UserRole> userRoles =
+          userDto.getRoles().stream()
+              .map(convertRolesToUserRoles(user))
+              .collect(Collectors.toList());
+      if (user.getUserRoles() != null) {
+        user.getUserRoles().clear();
+        user.getUserRoles().addAll(userRoles);
+      } else {
+        user.setUserRoles(userRoles);
+      }
     }
     user = userMapper.partialUpdate(userDto, user);
     User userUpdated = userRepository.save(user);
     if (userDto.getUsername() != null && !user.getUsername().equals(userDto.getUsername()))
       authService.revokeAllTokensOfUser(user.getId());
     return userMapper.toDto(userUpdated);
+  }
+
+  private Function<RoleDto, UserRole> convertRolesToUserRoles(User user) {
+    return roleDto -> {
+      if (roleDto.getId() == null) {
+        throw new BadRequestException(RoleMessage.ROLE_NOT_FOUND);
+      }
+
+      Role role =
+          roleRepository
+              .findById(roleDto.getId())
+              .orElseThrow(() -> new NotFoundException(RoleMessage.ROLE_NOT_FOUND));
+
+      return UserRole.builder()
+          .id(UserRole.UserRolePK.builder().userId(user.getId()).roleId(role.getId()).build())
+          .role(role)
+          .build();
+    };
   }
 
   @Transactional

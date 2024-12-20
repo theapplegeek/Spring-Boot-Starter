@@ -1,12 +1,13 @@
 package it.theapplegeek.spring_starter_pack.user.model;
 
-import it.theapplegeek.spring_starter_pack.role.model.Role;
+import it.theapplegeek.spring_starter_pack.role.model.RolePermission;
 import it.theapplegeek.spring_starter_pack.token.model.Token;
 import jakarta.persistence.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -17,9 +18,18 @@ import org.springframework.security.core.userdetails.UserDetails;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "user_profile")
 @Builder
+@Entity
+@Table(
+    name = "user_profile",
+    uniqueConstraints = {
+      @UniqueConstraint(
+          name = "UK_USER_PROFILE_USERNAME",
+          columnNames = {"username"}),
+      @UniqueConstraint(
+          name = "UK_USER_PROFILE_EMAIL",
+          columnNames = {"email"})
+    })
 public class User implements UserDetails {
   @Id
   @Column(name = "id")
@@ -45,12 +55,14 @@ public class User implements UserDetails {
   @Builder.Default
   private Boolean enabled = true;
 
-  @Column(name = "role_id", nullable = false)
-  private Long roleId;
-
-  @ManyToOne(fetch = FetchType.EAGER, optional = false)
-  @JoinColumn(name = "role_id", insertable = false, updatable = false)
-  private Role role;
+  @OneToMany(
+      mappedBy = "user",
+      fetch = FetchType.LAZY,
+      cascade = CascadeType.ALL,
+      orphanRemoval = true)
+  @BatchSize(size = 100)
+  @ToString.Exclude
+  private List<UserRole> userRoles;
 
   @OneToMany(
       mappedBy = "user",
@@ -62,7 +74,13 @@ public class User implements UserDetails {
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
-    return List.of(new SimpleGrantedAuthority("ROLE_" + role.getName().toUpperCase()));
+    return userRoles.stream()
+        .flatMap(userRole -> userRole.getRole().getRolePermissions().stream())
+        .map(RolePermission::getPermission)
+        .map(permission -> permission.getName().toUpperCase())
+        .distinct()
+        .map(SimpleGrantedAuthority::new)
+        .toList();
   }
 
   @Override

@@ -11,6 +11,7 @@ import it.theapplegeek.spring_starter_pack.common.exception.BadRequestException;
 import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedListMapper;
 import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedRequestParams;
 import it.theapplegeek.spring_starter_pack.role.dto.RoleDto;
+import it.theapplegeek.spring_starter_pack.role.error.RoleMessage;
 import it.theapplegeek.spring_starter_pack.role.model.Role;
 import it.theapplegeek.spring_starter_pack.role.repository.RoleRepository;
 import it.theapplegeek.spring_starter_pack.security.model.UserLogged;
@@ -18,8 +19,14 @@ import it.theapplegeek.spring_starter_pack.user.dto.UserDto;
 import it.theapplegeek.spring_starter_pack.user.error.UserMessage;
 import it.theapplegeek.spring_starter_pack.user.mapper.UserMapper;
 import it.theapplegeek.spring_starter_pack.user.model.User;
+import it.theapplegeek.spring_starter_pack.user.model.UserRole;
 import it.theapplegeek.spring_starter_pack.user.repository.UserRepository;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+
+import it.theapplegeek.spring_starter_pack.user.repository.UserRoleRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -32,6 +39,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
   @Mock UserRepository userRepository;
+  @Mock UserRoleRepository userRoleRepository;
   @Mock RoleRepository roleRepository;
   @Mock PagedListMapper<UserDto, User> userPagedMapper;
   @Mock UserMapper userMapper;
@@ -76,20 +84,29 @@ class UserServiceTest {
             .name(faker.name().firstName())
             .surname(faker.name().lastName())
             .password(faker.internet().password())
-            .role(RoleDto.builder().id(1L).build())
+            .roles(List.of(RoleDto.builder().id(1L).build()))
+            .build();
+    Role role = Role.builder().id(1L).name("user").build();
+    UserRole userRole =
+        UserRole.builder()
+            .id(UserRole.UserRolePK.builder().userId(123L).roleId(role.getId()).build())
+            .role(role)
             .build();
     User user =
         User.builder()
+            .id(123L)
             .username(userDto.getUsername())
             .email(userDto.getEmail())
             .name(userDto.getName())
             .surname(userDto.getSurname())
+            .userRoles(List.of(userRole))
             .build();
-    Role role = Role.builder().id(1L).name("user").build();
 
     given(userMapper.toEntity(userDto)).willReturn(user);
+    given(roleRepository.existsById(role.getId())).willReturn(true);
     given(roleRepository.findById(role.getId())).willReturn(Optional.of(role));
     given(userRepository.save(any(User.class))).willReturn(user);
+    given(userRoleRepository.save(any())).willReturn(userRole);
 
     // when
     userService.addUser(userDto);
@@ -99,9 +116,10 @@ class UserServiceTest {
     // then
     verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
     verify(userRepository, times(1)).existsByEmail(userDto.getEmail());
+    verify(roleRepository, times(1)).existsById(role.getId());
     verify(userMapper, times(1)).toEntity(userDto);
-    verify(roleRepository, times(1)).findById(userDto.getRole().getId());
     verify(userRepository, times(1)).save(userCaptor.capture());
+    verify(userRoleRepository, times(1)).save(userRole);
     verify(userMapper, times(1)).toDto(user);
 
     assertEquals(userDto.getUsername(), userCaptor.getValue().getUsername());
@@ -110,104 +128,10 @@ class UserServiceTest {
     assertEquals(userDto.getSurname(), userCaptor.getValue().getSurname());
     assertEquals(
         passwordEncoder.encode(userDto.getPassword()), userCaptor.getValue().getPassword());
-    assertEquals(role, userCaptor.getValue().getRole());
-    assertTrue(userCaptor.getValue().getEnabled());
-  }
-
-  @Test
-  void canAddUserWithDefaultRole() {
-    // given
-    UserDto userDto =
-        UserDto.builder()
-            .username(faker.name().username())
-            .email(faker.internet().emailAddress())
-            .name(faker.name().firstName())
-            .surname(faker.name().lastName())
-            .password(faker.internet().password())
-            .enabled(false)
-            .build();
-    User user =
-        User.builder()
-            .username(userDto.getUsername())
-            .email(userDto.getEmail())
-            .name(userDto.getName())
-            .surname(userDto.getSurname())
-            .enabled(userDto.getEnabled())
-            .build();
-    Role role = Role.builder().id(1L).name("user").build();
-
-    given(userMapper.toEntity(userDto)).willReturn(user);
-    given(roleRepository.findByName("user")).willReturn(Optional.of(role));
-    given(userRepository.save(any(User.class))).willReturn(user);
-
-    // when
-    userService.addUser(userDto);
-
-    ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-
-    // then
-    verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
-    verify(userRepository, times(1)).existsByEmail(userDto.getEmail());
-    verify(userMapper, times(1)).toEntity(userDto);
-    verify(roleRepository, times(1)).findByName("user");
-    verify(userRepository, times(1)).save(userCaptor.capture());
-    verify(userMapper, times(1)).toDto(user);
-
-    assertEquals(userDto.getUsername(), userCaptor.getValue().getUsername());
-    assertEquals(userDto.getEmail(), userCaptor.getValue().getEmail());
-    assertEquals(userDto.getName(), userCaptor.getValue().getName());
-    assertEquals(userDto.getSurname(), userCaptor.getValue().getSurname());
-    assertEquals(
-        passwordEncoder.encode(userDto.getPassword()), userCaptor.getValue().getPassword());
-    assertEquals(role, userCaptor.getValue().getRole());
-    assertFalse(userCaptor.getValue().getEnabled());
-  }
-
-  @Test
-  void canAddUserWithDefaultRoleWhenRoleIdIsNull() {
-    // given
-    UserDto userDto =
-        UserDto.builder()
-            .username(faker.name().username())
-            .email(faker.internet().emailAddress())
-            .name(faker.name().firstName())
-            .surname(faker.name().lastName())
-            .password(faker.internet().password())
-            .role(RoleDto.builder().build())
-            .build();
-    User user =
-        User.builder()
-            .username(userDto.getUsername())
-            .email(userDto.getEmail())
-            .name(userDto.getName())
-            .surname(userDto.getSurname())
-            .build();
-    Role role = Role.builder().id(1L).name("user").build();
-
-    given(userMapper.toEntity(userDto)).willReturn(user);
-    given(roleRepository.findByName("user")).willReturn(Optional.of(role));
-    given(userRepository.save(any(User.class))).willReturn(user);
-
-    // when
-    userService.addUser(userDto);
-
-    ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-
-    // then
-    verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
-    verify(userRepository, times(1)).existsByEmail(userDto.getEmail());
-    verify(userMapper, times(1)).toEntity(userDto);
-    verify(roleRepository, times(1)).findByName("user");
-    verify(userRepository, times(1)).save(userCaptor.capture());
-    verify(userMapper, times(1)).toDto(user);
-
-    assertEquals(userDto.getUsername(), userCaptor.getValue().getUsername());
-    assertEquals(userDto.getEmail(), userCaptor.getValue().getEmail());
-    assertEquals(userDto.getName(), userCaptor.getValue().getName());
-    assertEquals(userDto.getSurname(), userCaptor.getValue().getSurname());
-    assertEquals(
-        passwordEncoder.encode(userDto.getPassword()), userCaptor.getValue().getPassword());
-    assertEquals(role, userCaptor.getValue().getRole());
+    assertEquals(1, userCaptor.getValue().getUserRoles().size());
+    assertEquals(role, userCaptor.getValue().getUserRoles().getFirst().getRole());
+    assertEquals(1, userCaptor.getValue().getUserRoles().size());
+    assertEquals(role, userCaptor.getValue().getUserRoles().getFirst().getRole());
     assertTrue(userCaptor.getValue().getEnabled());
   }
 
@@ -266,8 +190,15 @@ class UserServiceTest {
             .name(userDto.getName())
             .surname(userDto.getSurname())
             .password(faker.internet().password())
-            .roleId(role.getId())
-            .role(role)
+            .userRoles(
+                List.of(
+                    UserRole.builder()
+                        .id(
+                            UserRole.UserRolePK.builder()
+                                .userId(userId)
+                                .roleId(role.getId())
+                                .build())
+                        .build()))
             .build();
 
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
@@ -292,16 +223,16 @@ class UserServiceTest {
   void canUpdateUserWithRoleAndSameUsernameAndSameEmail() {
     // given
     Long userId = 1L;
-    RoleDto roleDto = RoleDto.builder().id(2L).build();
+    RoleDto adminRoleDto = RoleDto.builder().id(2L).build();
     UserDto userDto =
         UserDto.builder()
             .name(faker.name().firstName())
             .surname(faker.name().lastName())
             .email(faker.internet().emailAddress())
             .username(faker.name().username())
-            .role(roleDto)
+            .roles(List.of(adminRoleDto))
             .build();
-    Role role = Role.builder().id(1L).name("user").build();
+    Role userRole = Role.builder().id(1L).name("user").build();
     Role adminRole = Role.builder().id(2L).name("admin").build();
     User user =
         User.builder()
@@ -311,14 +242,24 @@ class UserServiceTest {
             .name(userDto.getName())
             .surname(userDto.getSurname())
             .password(faker.internet().password())
-            .roleId(role.getId())
-            .role(role)
+            .userRoles(
+                new ArrayList<>() {
+                  {
+                    UserRole.builder()
+                        .id(
+                            UserRole.UserRolePK.builder()
+                                .userId(userId)
+                                .roleId(userRole.getId())
+                                .build())
+                        .build();
+                  }
+                })
             .build();
 
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
-    given(roleRepository.findById(userDto.getRole().getId())).willReturn(Optional.of(adminRole));
     given(userRepository.existsByUsername(userDto.getUsername())).willReturn(true);
     given(userRepository.existsByEmail(userDto.getEmail())).willReturn(true);
+    given(roleRepository.findById(adminRoleDto.getId())).willReturn(Optional.of(adminRole));
     given(userMapper.partialUpdate(eq(userDto), any(User.class))).willReturn(user);
     given(userRepository.save(user)).willReturn(user);
 
@@ -331,12 +272,15 @@ class UserServiceTest {
     verify(userRepository, times(1)).findById(userId);
     verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
     verify(userRepository, times(1)).existsByEmail(userDto.getEmail());
-    verify(roleRepository, times(1)).findById(userDto.getRole().getId());
+    verify(roleRepository, times(1)).findById(adminRoleDto.getId());
     verify(userMapper, times(1)).partialUpdate(eq(userDto), userCaptor.capture());
     verify(userRepository, times(1)).save(user);
     verify(authService, never()).revokeAllTokensOfUser(anyLong());
     verify(userMapper, times(1)).toDto(user);
-    assertEquals(adminRole, userCaptor.getValue().getRole());
+    assertEquals(1, userCaptor.getValue().getUserRoles().size());
+    assertEquals(adminRole, userCaptor.getValue().getUserRoles().getFirst().getRole());
+    assertEquals(1, userCaptor.getValue().getUserRoles().size());
+    assertEquals(adminRole, userCaptor.getValue().getUserRoles().getFirst().getRole());
   }
 
   @Test
@@ -350,7 +294,7 @@ class UserServiceTest {
             .surname(faker.name().lastName())
             .username(faker.name().username())
             .email(faker.internet().emailAddress())
-            .role(roleDto)
+            .roles(List.of(roleDto))
             .build();
     Role role = Role.builder().id(1L).name("user").build();
     User user =
@@ -361,28 +305,35 @@ class UserServiceTest {
             .name(userDto.getName())
             .surname(userDto.getSurname())
             .password(faker.internet().password())
-            .roleId(role.getId())
-            .role(role)
+            .userRoles(
+                List.of(
+                    UserRole.builder()
+                        .id(
+                            UserRole.UserRolePK.builder()
+                                .userId(userId)
+                                .roleId(role.getId())
+                                .build())
+                        .build()))
             .build();
 
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(userRepository.existsByUsername(userDto.getUsername())).willReturn(false);
     given(userRepository.existsByEmail(userDto.getEmail())).willReturn(false);
-    given(userMapper.partialUpdate(userDto, user)).willReturn(user);
-    given(userRepository.save(user)).willReturn(user);
 
     // when
-    userService.updateUser(userId, userDto);
-
     // then
+    assertThrows(
+        BadRequestException.class,
+        () -> userService.updateUser(userId, userDto),
+        RoleMessage.ROLE_NOT_FOUND);
     verify(userRepository, times(1)).findById(userId);
     verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
     verify(userRepository, times(1)).existsByEmail(userDto.getEmail());
-    verify(roleRepository, never()).findById(anyLong());
-    verify(userMapper, times(1)).partialUpdate(userDto, user);
-    verify(userRepository, times(1)).save(user);
+    verify(roleRepository, never()).existsById(anyLong());
+    verify(userMapper, never()).partialUpdate(userDto, user);
+    verify(userRepository, never()).save(user);
     verify(authService, never()).revokeAllTokensOfUser(anyLong());
-    verify(userMapper, times(1)).toDto(user);
+    verify(userMapper, never()).toDto(user);
   }
 
   @Test

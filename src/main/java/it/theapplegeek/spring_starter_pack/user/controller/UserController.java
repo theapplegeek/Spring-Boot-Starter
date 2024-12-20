@@ -22,6 +22,7 @@ public class UserController {
   private final UserService userService;
 
   @PostMapping("list")
+  @PreAuthorize("hasAnyAuthority('USER_READ')")
   public PagedListDto<UserDto> getAllUsers(
       @RequestParam("page") int page,
       @RequestParam("size") int size,
@@ -32,17 +33,19 @@ public class UserController {
   }
 
   @PostMapping
+  @PreAuthorize("hasAnyAuthority('USER_CREATE')")
   public UserDto addUser(@RequestBody @Valid UserDto userDto) {
     return userService.addUser(userDto);
   }
 
   @PutMapping("{userId}")
+  @PreAuthorize("hasAnyAuthority('USER_UPDATE')")
   public UserDto updateUser(@PathVariable("userId") Long userId, @RequestBody UserDto userDto) {
     return userService.updateUser(userId, userDto);
   }
 
   @PutMapping("change-password")
-  @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+  @PreAuthorize("hasAnyAuthority('USER_CHANGE_PASSWORD')")
   public void changePassword(@ProvideUserLogged UserLogged userLogged, @RequestBody Map<String, String> data) {
     String oldPassword = data.get("oldPassword");
     String newPassword = data.get("newPassword");
@@ -55,6 +58,7 @@ public class UserController {
   }
 
   @DeleteMapping("{userId}")
+  @PreAuthorize("hasAnyAuthority('USER_DELETE')")
   public void deleteUser(@PathVariable("userId") Long userId) {
     userService.deleteUser(userId);
   }

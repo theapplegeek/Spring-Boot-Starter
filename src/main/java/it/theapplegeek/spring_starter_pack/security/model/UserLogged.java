@@ -1,10 +1,13 @@
 package it.theapplegeek.spring_starter_pack.security.model;
 
+import it.theapplegeek.spring_starter_pack.permission.model.Permission;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import it.theapplegeek.spring_starter_pack.role.model.Role;
+
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -16,5 +19,6 @@ public class UserLogged {
   private String name;
   private String surname;
   private String username;
-  private Role role;
+  private List<Role> roles;
+  private List<Permission> permissions;
 }

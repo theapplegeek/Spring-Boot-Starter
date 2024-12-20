@@ -1,7 +1,7 @@
 package it.theapplegeek.spring_starter_pack.user.repository;
 
-import java.util.Optional;
 import it.theapplegeek.spring_starter_pack.user.model.User;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
