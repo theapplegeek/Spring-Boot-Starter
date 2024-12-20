@@ -7,12 +7,10 @@ import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedRequestPa
 import it.theapplegeek.spring_starter_pack.role.dto.RoleDto;
 import it.theapplegeek.spring_starter_pack.user.dto.UserDto;
 import it.theapplegeek.spring_starter_pack.user.model.User;
-
+import it.theapplegeek.spring_starter_pack.user.model.UserRole;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import it.theapplegeek.spring_starter_pack.user.model.UserRole;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -49,14 +47,15 @@ class UserRepositoryTest {
                 .userRoles(new ArrayList<>())
                 .build());
 
-    UserRole userRole = userRoleRepository.save(
-        UserRole.builder()
-            .id(
-                UserRole.UserRolePK.builder()
-                    .userId(user.getId())
-                    .roleId(faker.number().numberBetween(1L, 2L))
-                    .build())
-            .build());
+    UserRole userRole =
+        userRoleRepository.save(
+            UserRole.builder()
+                .id(
+                    UserRole.UserRolePK.builder()
+                        .userId(user.getId())
+                        .roleId(faker.number().numberBetween(1L, 2L))
+                        .build())
+                .build());
 
     user.getUserRoles().add(userRole);
     return user;

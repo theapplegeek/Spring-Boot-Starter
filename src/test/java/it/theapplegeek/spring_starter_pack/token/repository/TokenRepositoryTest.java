@@ -25,8 +25,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class TokenRepositoryTest {
   @Container @ServiceConnection
   static PostgreSQLContainer<?> postgreSQLContainer =
-      new PostgreSQLContainer<>("postgres:16.3-alpine")
-          .withInitScript("db/data.sql");
+      new PostgreSQLContainer<>("postgres:16.3-alpine").withInitScript("db/data.sql");
 
   @Autowired TokenRepository tokenRepository;
   @Autowired UserRepository userRepository;

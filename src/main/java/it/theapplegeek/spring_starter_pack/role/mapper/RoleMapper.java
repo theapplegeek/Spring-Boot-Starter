@@ -1,12 +1,11 @@
 package it.theapplegeek.spring_starter_pack.role.mapper;
 
-import java.util.List;
-
+import it.theapplegeek.spring_starter_pack.common.util.pagination.IMapper;
 import it.theapplegeek.spring_starter_pack.permission.mapper.PermissionMapper;
 import it.theapplegeek.spring_starter_pack.role.dto.RoleDto;
 import it.theapplegeek.spring_starter_pack.role.model.Role;
-import it.theapplegeek.spring_starter_pack.common.util.pagination.IMapper;
 import it.theapplegeek.spring_starter_pack.user.model.UserRole;
+import java.util.List;
 import org.mapstruct.*;
 
 @Mapper(

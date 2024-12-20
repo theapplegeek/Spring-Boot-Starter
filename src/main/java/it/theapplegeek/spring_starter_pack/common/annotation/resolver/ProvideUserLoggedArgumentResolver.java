@@ -1,10 +1,10 @@
 package it.theapplegeek.spring_starter_pack.common.annotation.resolver;
 
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
 import it.theapplegeek.spring_starter_pack.common.annotation.ProvideUserLogged;
 import it.theapplegeek.spring_starter_pack.common.exception.UnauthorizedException;
 import it.theapplegeek.spring_starter_pack.security.service.JwtService;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.NonNull;

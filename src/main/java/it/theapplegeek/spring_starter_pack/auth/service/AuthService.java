@@ -1,20 +1,20 @@
 package it.theapplegeek.spring_starter_pack.auth.service;
 
 import it.theapplegeek.spring_starter_pack.auth.error.AuthMessage;
+import it.theapplegeek.spring_starter_pack.common.exception.UnauthorizedException;
+import it.theapplegeek.spring_starter_pack.common.payload.JwtResponse;
+import it.theapplegeek.spring_starter_pack.common.payload.LoginRequest;
 import it.theapplegeek.spring_starter_pack.email.service.EmailService;
+import it.theapplegeek.spring_starter_pack.security.service.JwtService;
+import it.theapplegeek.spring_starter_pack.token.model.Token;
+import it.theapplegeek.spring_starter_pack.token.model.TokenType;
+import it.theapplegeek.spring_starter_pack.token.repository.TokenRepository;
+import it.theapplegeek.spring_starter_pack.user.model.User;
+import it.theapplegeek.spring_starter_pack.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import java.time.ZoneId;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
-import it.theapplegeek.spring_starter_pack.common.exception.UnauthorizedException;
-import it.theapplegeek.spring_starter_pack.token.model.Token;
-import it.theapplegeek.spring_starter_pack.token.model.TokenType;
-import it.theapplegeek.spring_starter_pack.user.model.User;
-import it.theapplegeek.spring_starter_pack.common.payload.JwtResponse;
-import it.theapplegeek.spring_starter_pack.common.payload.LoginRequest;
-import it.theapplegeek.spring_starter_pack.token.repository.TokenRepository;
-import it.theapplegeek.spring_starter_pack.user.repository.UserRepository;
-import it.theapplegeek.spring_starter_pack.security.service.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -114,7 +114,8 @@ public class AuthService {
         userRepository
             .findById(resetToken.getUserId())
             .orElseThrow(() -> new UnauthorizedException(AuthMessage.INVALID_TOKEN));
-    if (!jwtService.isTokenValid(token, user)) throw new UnauthorizedException(AuthMessage.INVALID_TOKEN);
+    if (!jwtService.isTokenValid(token, user))
+      throw new UnauthorizedException(AuthMessage.INVALID_TOKEN);
     user.setPassword(passwordEncoder.encode(password));
     resetToken.setRevoked(true);
     userRepository.save(user);

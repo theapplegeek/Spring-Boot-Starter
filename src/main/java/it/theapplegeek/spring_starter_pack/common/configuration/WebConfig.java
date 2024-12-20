@@ -1,11 +1,11 @@
 package it.theapplegeek.spring_starter_pack.common.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
-import lombok.AllArgsConstructor;
 import it.theapplegeek.spring_starter_pack.common.annotation.resolver.ProvideUserLoggedArgumentResolver;
 import it.theapplegeek.spring_starter_pack.common.annotation.resolver.RequestPartParsedArgumentResolver;
 import it.theapplegeek.spring_starter_pack.security.service.JwtService;
+import java.util.List;
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;

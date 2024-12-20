@@ -2,16 +2,15 @@ package it.theapplegeek.spring_starter_pack.user.controller;
 
 import it.theapplegeek.spring_starter_pack.common.annotation.ProvideUserLogged;
 import it.theapplegeek.spring_starter_pack.common.exception.BadRequestException;
+import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedListDto;
 import it.theapplegeek.spring_starter_pack.security.model.UserLogged;
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 import it.theapplegeek.spring_starter_pack.user.dto.UserDto;
 import it.theapplegeek.spring_starter_pack.user.service.UserService;
-import it.theapplegeek.spring_starter_pack.common.util.pagination.PagedListDto;
+import jakarta.validation.Valid;
+import java.util.Map;
+import lombok.AllArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/user")
@@ -46,7 +45,8 @@ public class UserController {
 
   @PutMapping("change-password")
   @PreAuthorize("hasAnyAuthority('USER_CHANGE_PASSWORD')")
-  public void changePassword(@ProvideUserLogged UserLogged userLogged, @RequestBody Map<String, String> data) {
+  public void changePassword(
+      @ProvideUserLogged UserLogged userLogged, @RequestBody Map<String, String> data) {
     String oldPassword = data.get("oldPassword");
     String newPassword = data.get("newPassword");
 

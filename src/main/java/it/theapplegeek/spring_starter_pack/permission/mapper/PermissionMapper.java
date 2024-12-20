@@ -4,9 +4,8 @@ import it.theapplegeek.spring_starter_pack.common.util.pagination.IMapper;
 import it.theapplegeek.spring_starter_pack.permission.dto.PermissionDto;
 import it.theapplegeek.spring_starter_pack.permission.model.Permission;
 import it.theapplegeek.spring_starter_pack.role.model.RolePermission;
-import org.mapstruct.*;
-
 import java.util.List;
+import org.mapstruct.*;
 
 @Mapper(
     unmappedTargetPolicy = ReportingPolicy.IGNORE,

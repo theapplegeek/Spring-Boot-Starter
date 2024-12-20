@@ -2,11 +2,10 @@ package it.theapplegeek.spring_starter_pack.user.model;
 
 import it.theapplegeek.spring_starter_pack.role.model.Role;
 import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.proxy.HibernateProxy;
-
 import java.io.Serializable;
 import java.util.Objects;
+import lombok.*;
+import org.hibernate.proxy.HibernateProxy;
 
 @Getter
 @Setter

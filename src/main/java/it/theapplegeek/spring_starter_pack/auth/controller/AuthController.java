@@ -1,11 +1,11 @@
 package it.theapplegeek.spring_starter_pack.auth.controller;
 
-import java.util.Map;
-import lombok.AllArgsConstructor;
+import it.theapplegeek.spring_starter_pack.auth.service.AuthService;
 import it.theapplegeek.spring_starter_pack.common.exception.BadRequestException;
 import it.theapplegeek.spring_starter_pack.common.payload.JwtResponse;
 import it.theapplegeek.spring_starter_pack.common.payload.LoginRequest;
-import it.theapplegeek.spring_starter_pack.auth.service.AuthService;
+import java.util.Map;
+import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

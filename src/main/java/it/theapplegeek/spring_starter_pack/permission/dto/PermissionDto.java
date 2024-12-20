@@ -1,9 +1,8 @@
 package it.theapplegeek.spring_starter_pack.permission.dto;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
-
 import java.io.Serializable;
+import lombok.*;
 
 @Data
 @AllArgsConstructor

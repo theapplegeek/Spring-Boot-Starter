@@ -81,7 +81,8 @@ public class JwtService {
                         .build())
             .toList();
 
-    ArrayList<LinkedHashMap<String, Object>> permissionsMapList = claims.get("permissions", ArrayList.class);
+    ArrayList<LinkedHashMap<String, Object>> permissionsMapList =
+        claims.get("permissions", ArrayList.class);
     List<Permission> permissions =
         permissionsMapList.stream()
             .map(

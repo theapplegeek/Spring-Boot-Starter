@@ -1,13 +1,12 @@
 package it.theapplegeek.spring_starter_pack.security.model;
 
 import it.theapplegeek.spring_starter_pack.permission.model.Permission;
+import it.theapplegeek.spring_starter_pack.role.model.Role;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import it.theapplegeek.spring_starter_pack.role.model.Role;
-
-import java.util.List;
 
 @Data
 @AllArgsConstructor

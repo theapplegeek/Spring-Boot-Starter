@@ -21,12 +21,10 @@ import it.theapplegeek.spring_starter_pack.user.mapper.UserMapper;
 import it.theapplegeek.spring_starter_pack.user.model.User;
 import it.theapplegeek.spring_starter_pack.user.model.UserRole;
 import it.theapplegeek.spring_starter_pack.user.repository.UserRepository;
-
+import it.theapplegeek.spring_starter_pack.user.repository.UserRoleRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import it.theapplegeek.spring_starter_pack.user.repository.UserRoleRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

@@ -8,19 +8,19 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 @Configuration
 public class EmailTemplateConfig {
 
-    @Bean
-    public SpringTemplateEngine emailTemplateEngine() {
-        SpringTemplateEngine templateEngine = new SpringTemplateEngine();
-        templateEngine.setTemplateResolver(emailTemplateResolver());
-        return templateEngine;
-    }
+  @Bean
+  public SpringTemplateEngine emailTemplateEngine() {
+    SpringTemplateEngine templateEngine = new SpringTemplateEngine();
+    templateEngine.setTemplateResolver(emailTemplateResolver());
+    return templateEngine;
+  }
 
-    private ClassLoaderTemplateResolver emailTemplateResolver() {
-        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
-        templateResolver.setPrefix("/email-templates/");
-        templateResolver.setSuffix(".html");
-        templateResolver.setTemplateMode("HTML");
-        templateResolver.setCharacterEncoding("UTF-8");
-        return templateResolver;
-    }
+  private ClassLoaderTemplateResolver emailTemplateResolver() {
+    ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
+    templateResolver.setPrefix("/email-templates/");
+    templateResolver.setSuffix(".html");
+    templateResolver.setTemplateMode("HTML");
+    templateResolver.setCharacterEncoding("UTF-8");
+    return templateResolver;
+  }
 }

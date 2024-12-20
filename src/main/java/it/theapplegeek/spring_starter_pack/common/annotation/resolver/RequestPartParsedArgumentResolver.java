@@ -3,12 +3,12 @@ package it.theapplegeek.spring_starter_pack.common.annotation.resolver;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.theapplegeek.spring_starter_pack.common.annotation.RequestPartParsed;
+import it.theapplegeek.spring_starter_pack.common.exception.BadRequestException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
 import java.util.Objects;
-import it.theapplegeek.spring_starter_pack.common.annotation.RequestPartParsed;
-import it.theapplegeek.spring_starter_pack.common.exception.BadRequestException;
 import org.springframework.core.MethodParameter;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -60,10 +60,9 @@ public class RequestPartParsedArgumentResolver implements HandlerMethodArgumentR
     }
   }
 
+  @SuppressWarnings("unchecked")
   private JavaType getJavaType(MethodParameter parameter) {
-    // Verifica se il tipo del parametro è una collezione
     if (Collection.class.isAssignableFrom(parameter.getParameterType())) {
-      // Ottiene il tipo generico degli elementi della collezione
       ParameterizedType parameterizedType = (ParameterizedType) parameter.getGenericParameterType();
       Class<?> collectionType = (Class<?>) parameterizedType.getRawType();
       Class<?> elementType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
@@ -71,7 +70,6 @@ public class RequestPartParsedArgumentResolver implements HandlerMethodArgumentR
           .getTypeFactory()
           .constructCollectionType((Class<? extends Collection>) collectionType, elementType);
     } else {
-      // Gestisce il tipo semplice
       return objectMapper.getTypeFactory().constructType(parameter.getGenericParameterType());
     }
   }
