@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/user")
 @AllArgsConstructor
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
 public class UserController {
   private final UserService userService;
 
