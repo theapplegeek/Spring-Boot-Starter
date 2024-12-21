@@ -201,7 +201,7 @@ class UserServiceTest {
 
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(userMapper.partialUpdate(userDto, user)).willReturn(user);
-    given(userRepository.save(user)).willReturn(user);
+    given(userRepository.saveAndFlush(user)).willReturn(user);
 
     // when
     userService.updateUser(userId, userDto);
@@ -212,7 +212,7 @@ class UserServiceTest {
     verify(userRepository, never()).existsByEmail(anyString());
     verify(roleRepository, never()).findById(anyLong());
     verify(userMapper, times(1)).partialUpdate(userDto, user);
-    verify(userRepository, times(1)).save(user);
+    verify(userRepository, times(1)).saveAndFlush(user);
     verify(authService, never()).revokeAllTokensOfUser(anyLong());
     verify(userMapper, times(1)).toDto(user);
   }
@@ -259,7 +259,7 @@ class UserServiceTest {
     given(userRepository.existsByEmail(userDto.getEmail())).willReturn(true);
     given(roleRepository.findById(adminRoleDto.getId())).willReturn(Optional.of(adminRole));
     given(userMapper.partialUpdate(eq(userDto), any(User.class))).willReturn(user);
-    given(userRepository.save(user)).willReturn(user);
+    given(userRepository.saveAndFlush(user)).willReturn(user);
 
     // when
     userService.updateUser(userId, userDto);
@@ -272,8 +272,8 @@ class UserServiceTest {
     verify(userRepository, times(1)).existsByEmail(userDto.getEmail());
     verify(roleRepository, times(1)).findById(adminRoleDto.getId());
     verify(userMapper, times(1)).partialUpdate(eq(userDto), userCaptor.capture());
-    verify(userRepository, times(1)).save(user);
-    verify(authService, never()).revokeAllTokensOfUser(anyLong());
+    verify(userRepository, times(1)).saveAndFlush(user);
+    verify(authService, times(1)).revokeAllTokensOfUser(anyLong());
     verify(userMapper, times(1)).toDto(user);
     assertEquals(1, userCaptor.getValue().getUserRoles().size());
     assertEquals(adminRole, userCaptor.getValue().getUserRoles().getFirst().getRole());
@@ -368,7 +368,7 @@ class UserServiceTest {
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(userRepository.existsByUsername(userDto.getUsername())).willReturn(false);
     given(userMapper.partialUpdate(userDto, user)).willReturn(user);
-    given(userRepository.save(user)).willReturn(user);
+    given(userRepository.saveAndFlush(user)).willReturn(user);
 
     // when
     userService.updateUser(userId, userDto);
@@ -379,7 +379,7 @@ class UserServiceTest {
     verify(userRepository, never()).existsByEmail(anyString());
     verify(roleRepository, never()).findById(anyLong());
     verify(userMapper, times(1)).partialUpdate(userDto, user);
-    verify(userRepository, times(1)).save(user);
+    verify(userRepository, times(1)).saveAndFlush(user);
     verify(authService, times(1)).revokeAllTokensOfUser(anyLong());
     verify(userMapper, times(1)).toDto(user);
   }

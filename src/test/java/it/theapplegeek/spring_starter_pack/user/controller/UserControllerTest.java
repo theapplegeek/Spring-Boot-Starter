@@ -371,6 +371,7 @@ class UserControllerTest {
       authorities = {"USER_UPDATE"})
   void shouldUpdateUser() {
     User admin = userRepository.findByUsername("admin").orElseThrow();
+    String oldHashedPassword = admin.getPassword();
     List<RoleDto> roles = new ArrayList<>();
     roles.add(RoleDto.builder().id(2L).build());
     UserDto adminDto =
@@ -404,8 +405,9 @@ class UserControllerTest {
               assertThat(user.getEnabled()).isEqualTo(adminDto.getEnabled());
             });
 
+    userRepository.flush();
     User updated = userRepository.findByUsername("newAdmin").orElseThrow();
-    assertEquals(updated.getPassword(), admin.getPassword());
+    assertEquals(updated.getPassword(), oldHashedPassword);
   }
 
   @Test

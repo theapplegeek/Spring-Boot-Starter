@@ -78,6 +78,7 @@ public class AuthService {
     SecurityContextHolder.clearContext();
   }
 
+  @Transactional
   public void revokeAllTokensOfUser(Long userId) {
     tokenRepository.revokeAllByUserIdAndType(userId, TokenType.BEARER);
   }

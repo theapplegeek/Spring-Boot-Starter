@@ -18,7 +18,6 @@ public interface TokenRepository extends JpaRepository<Token, Long> {
   void deleteAllByExpirationDate(LocalDateTime expirationDate);
 
   @Modifying(clearAutomatically = true)
-  @Transactional
   @Query(
       "update Token t set t.revoked = true where t.userId = :userId and t.tokenType = :tokenType")
   void revokeAllByUserIdAndType(Long userId, TokenType tokenType);

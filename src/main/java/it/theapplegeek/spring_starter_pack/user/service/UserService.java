@@ -113,11 +113,14 @@ public class UserService {
         user.setUserRoles(userRoles);
       }
     }
+    boolean isUsernameChanged =
+        userDto.getUsername() != null && !user.getUsername().equals(userDto.getUsername());
+    boolean isRolesChanged = userDto.getRoles() != null && !userDto.getRoles().isEmpty();
     user = userMapper.partialUpdate(userDto, user);
-    User userUpdated = userRepository.save(user);
-    if (userDto.getUsername() != null && !user.getUsername().equals(userDto.getUsername()))
-      authService.revokeAllTokensOfUser(user.getId());
-    return userMapper.toDto(userUpdated);
+    User userUpdated = userRepository.saveAndFlush(user);
+    UserDto userDtoUpdated = userMapper.toDto(userUpdated);
+    if (isUsernameChanged || isRolesChanged) authService.revokeAllTokensOfUser(user.getId());
+    return userDtoUpdated;
   }
 
   private Function<RoleDto, UserRole> convertRolesToUserRoles(User user) {
