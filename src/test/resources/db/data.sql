@@ -71,8 +71,7 @@ VALUES ('USER_READ'),
        ('PERMISSION_READ');
 
 INSERT INTO role_permission (role_id, permission_id)
-VALUES (1, 1),
-       (1, 4),
+VALUES (1, 4),
        (2, 1),
        (2, 2),
        (2, 3),
