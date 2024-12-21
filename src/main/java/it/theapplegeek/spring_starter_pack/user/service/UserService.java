@@ -150,7 +150,7 @@ public class UserService {
     }
 
     user.setPassword(passwordEncoder.encode(newPassword));
-    userRepository.save(user);
+    userRepository.saveAndFlush(user);
     authService.revokeAllTokensOfUser(user.getId());
   }
 

@@ -429,7 +429,7 @@ class UserServiceTest {
     // then
     verify(userRepository, times(1)).findById(userId);
     verify(passwordEncoder, times(1)).encode(newPassword);
-    verify(userRepository, times(1)).save(userCaptor.capture());
+    verify(userRepository, times(1)).saveAndFlush(userCaptor.capture());
     verify(authService, times(1)).revokeAllTokensOfUser(userId);
     assertEquals(newPassword, userCaptor.getValue().getPassword());
   }

@@ -497,6 +497,7 @@ class UserControllerTest {
   void shouldChangePassword() {
     String token = loginAdmin();
     User admin = userRepository.findByUsername("admin").orElseThrow();
+    String oldHashedPassword = admin.getPassword();
 
     Map<String, String> data = Map.of("oldPassword", "Password", "newPassword", "newPassword123!");
     HttpHeaders headers = new HttpHeaders();
@@ -511,7 +512,7 @@ class UserControllerTest {
         .hasStatusOk();
 
     User updated = userRepository.findByUsername("admin").orElseThrow();
-    assertNotEquals(updated.getPassword(), admin.getPassword());
+    assertNotEquals(updated.getPassword(), oldHashedPassword);
   }
 
   @Test
