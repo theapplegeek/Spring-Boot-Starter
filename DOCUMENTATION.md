@@ -31,34 +31,50 @@ PostgreSQL is used as the database. You can change the database adding correspon
 ### Database Structure
 ```text
 +-------------------------+       +--------------------------+        +--------------------------+
-|         role            |       |      user_profile        |        |          token           |
+|        user_role        |       |      user_profile        |        |          token           |
 +-------------------------+       +--------------------------+        +--------------------------+
-| id (PK, bigint)         |<--+   | id (PK, bigint)          |<---+   | id (PK, bigint)          |
-| name (varchar(255))     |   |   | email (varchar(255))     |    |   | expiration (timestamp(6))|
-+-------------------------+   |   | enabled (boolean)        |    |   | revoked (boolean)        |
-                              |   | name (varchar(255))      |    |   | token (varchar(10240))   |
-                              |   | password (varchar(255))  |    |   | token_type (varchar(255))|
-                              +---| role_id (FK, bigint) ----+    +---| user_id (FK, bigint) ----+
-                                  | surname (varchar(255))   |        +--------------------------+
-                                  | username (varchar(255))  |
-                                  +--------------------------+
+| user_id (FK, bigint) ---+------>| id (PK, bigint)          |<---+   | id (PK, bigint)          |
+| role_id (FK, bigint) ---+--+    | email (varchar(255))     |    |   | expiration (timestamp(6))|
++-------------------------+  |    | enabled (boolean)        |    |   | revoked (boolean)        |
+                             |    | name (varchar(255))      |    |   | token (varchar(10240))   |
+                             |    | password (varchar(255))  |    |   | token_type (varchar(255))|
+                             |    | surname (varchar(255))   |    +---| user_id (FK, bigint) ----+
+                             |    | username (varchar(255))  |        +--------------------------+
++-------------------------+  |    +--------------------------+
+|         role            |  |
++-------------------------+  |
+| id (PK, bigint)         |<-+----+
+| name (varchar(255))     |       |
++-------------------------+       |
+                                  |
++----------------------------+    |      +-------------------------+
+|      role_permission       |    |      |      permission         |
++----------------------------+    |      +-------------------------+
+| role_id (FK, bigint) ------+----+  +-->| id (PK, bigint)         |
+| permission_id (FK, bigint) +-------+   | name (varchar(255))     |
++----------------------------+           +-------------------------+
 ```
 
 Tables:
 - `role` table stores the roles of the users.
+- `permission` table stores the permissions of the roles.
 - `user_profile` table stores the user details.
+- `user_role` table stores the relationship between `user` and `role`.
+- `role_permission` table stores the relationship between `role` and `permission`.
 - `token` table stores the tokens generated for JWT access token and reset password.
 
 Relationships:
-- `user_profile.role_id`: `user` can have only one `role`; `role` can have multiple `users`.
+- `user_role`: `user` can have multiple `roles`; `role` belongs to multiple `users`.
+- `role_permission`: `role` can have multiple `permissions`; `permission` belongs to multiple `roles`.
 - `token.user_id`: `user` can have multiple `tokens`; `token` belongs to only one `user`.
 
-NOTE: Use `data.sql` file to insert the default data in the `role` and `user` table.
+NOTE: Use `data.sql` file to insert the default data in the database.
 
 ## REST APIs
 - `/api/auth**`: Authentication APIs.
 - `/api/user**`: Users Management APIs.
 - `/api/role**`: Roles Management APIs.
+- `/api/permission**`: Permissions Management APIs.
 
 You can use Postman to view and test the APIs. Import the collection from `API.postman_collection.json`.
 
@@ -103,16 +119,37 @@ NOTE: CHANGE JWT SECRET KEY in `application.yml` file.
 
 ## RBAC
 Role-Based Access Control (RBAC) is used to manage the access control of the users.
-Each user has a role, which defines the access level of the user.
+Each user has a roles, which defines the access level of the user.
+Each role has permissions, which defines the access level of the role.
 
 ### APIs Access Control
 - `/api/auth**`: Everyone can access.
-- `/api/user**`: Only `ADMIN` can access, except the `change-password` API.
-- `/api/role**`: Only `ADMIN` can access.
+- `/api/user**`: Only `USER_**` permission can access.
+- `/api/role**`: Only `ROLE_**` permission can access.
+- `/api/permission**`: Only `PERMISSION_**` permission can access.
+
+### Default Permissions
+- `USER_READ`: Can access the resources `POST /api/user/list`.
+- `USER_CREATE`: Can access the resources `POST /api/user`.
+- `USER_UPDATE`: Can access the resources `PUT /api/user/:userId`.
+- `USER_CHANGE_PASSWORD`: Can access the resources `PUT /api/user/change-password`.
+- `USER_DELETE`: Can access the resources `DELETE /api/user/:userId`.
+- `ROLE_READ`: Can access the resources `GET /api/role`.
+- `PERMISSION_READ`: Can access the resources `GET /api/permission` and `GET /api/permission/role/:roleId`.
 
 ### Default Roles
-- `ADMIN`: Can access all the resources.
-- `USER`: Can access the resources except the admin resources.
+- `ADMIN`: <br>
+    Permissions:
+    - `USER_READ`
+    - `USER_CREATE`
+    - `USER_UPDATE`
+    - `USER_CHANGE_PASSWORD`
+    - `USER_DELETE`
+    - `ROLE_READ`
+    - `PERMISSION_READ`
+- `USER`: <br>
+    Permissions:
+    - `USER_CHANGE_PASSWORD`
 
 ### Default Users
 - Admin user:

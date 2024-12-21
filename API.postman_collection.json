@@ -1,10 +1,9 @@
 {
 	"info": {
-		"_postman_id": "bfa3c5b3-48d4-4092-9607-b9002cfe3eac",
+		"_postman_id": "c69e29c0-2d1d-4e69-b2c0-3b1ef0fe8e20",
 		"name": "Spring Starter Pack",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "32245274",
-		"_collection_link": "https://agm-solutions.postman.co/workspace/Contract-Sender-API~efeb8ee9-2083-4f52-a407-2cadf6f24cf5/collection/32245274-bfa3c5b3-48d4-4092-9607-b9002cfe3eac?action=share&source=collection_link&creator=32245274"
+		"_exporter_id": "32245274"
 	},
 	"item": [
 		{
@@ -12,6 +11,24 @@
 			"item": [
 				{
 					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const statusCode = pm.response.code;",
+									"",
+									"if (statusCode === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set(\"ACCESS_TOKEN\", response[\"accessToken\"]);",
+									"    pm.collectionVariables.set(\"REFRESH_TOKEN\", response[\"refreshToken\"]);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"auth": {
 							"type": "noauth"
@@ -43,7 +60,35 @@
 				},
 				{
 					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const statusCode = pm.response.code;",
+									"",
+									"if (statusCode === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set(\"ACCESS_TOKEN\", response[\"accessToken\"]);",
+									"    pm.collectionVariables.set(\"REFRESH_TOKEN\", response[\"refreshToken\"]);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{REFRESH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [],
 						"url": {
@@ -124,6 +169,23 @@
 				},
 				{
 					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const statusCode = pm.response.code;",
+									"",
+									"if (statusCode === 200) {",
+									"    pm.collectionVariables.set(\"ACCESS_TOKEN\", \"?\");",
+									"    pm.collectionVariables.set(\"REFRESH_TOKEN\", \"?\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -151,6 +213,15 @@
 					"request": {
 						"method": "POST",
 						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roles\": [\n        {\n            \"id\": 2\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
 							"raw": "{{BASE_URL}}/api/user/list?page=0&size=10",
 							"host": [
@@ -182,7 +253,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"username\",\n    \"password\": \"Password\",\n    \"name\": \"user\",\n    \"surname\": \"superuser\",\n    \"email\": \"user@gmail.com\",\n    \"role\": {\n        \"id\": 2\n    }\n}",
+							"raw": "{\n    \"username\": \"add-user-test\",\n    \"password\": \"Password\",\n    \"name\": \"user-test\",\n    \"surname\": \"superuser\",\n    \"email\": \"user-test@gmail.com\",\n    \"roles\": [\n        {\n            \"id\": 2\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -209,7 +280,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"newName\",\n    \"role\": {\n        \"id\": 2\n    }\n}",
+							"raw": "{\n    \"name\": \"newName123\",\n    \"roles\": [\n        {\n            \"id\": 2\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -243,7 +314,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"oldPassword\": \"Password\",\n    \"newPassword\": \"Password123!\"\n}",
+							"raw": "{\n    \"oldPassword\": \"Password\",\n    \"newPassword\": \"Password123\"\n}\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -282,12 +353,34 @@
 							"variable": [
 								{
 									"key": "userId",
-									"value": "1"
+									"value": "3"
 								}
 							]
 						}
 					},
 					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
 				}
 			]
 		},
@@ -313,6 +406,55 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Permission",
+			"item": [
+				{
+					"name": "Permission List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/permission",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"permission"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Permission List By Role ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/permission/role/:roleID",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"permission",
+								"role",
+								":roleID"
+							],
+							"variable": [
+								{
+									"key": "roleID",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"auth": {
@@ -320,7 +462,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "your_token",
+				"value": "{{ACCESS_TOKEN}}",
 				"type": "string"
 			}
 		]
@@ -332,7 +474,13 @@
 				"type": "text/javascript",
 				"packages": {},
 				"exec": [
-					""
+					"const auth = pm.request.auth;",
+					"if (auth && auth[\"type\"] === \"noauth\") return;",
+					"",
+					"const accessToken = pm.collectionVariables.get(\"ACCESS_TOKEN\");",
+					"if (accessToken === \"?\") {",
+					"    throw new Error(\"Please Login First!\");",
+					"}"
 				]
 			}
 		},
@@ -351,6 +499,16 @@
 		{
 			"key": "BASE_URL",
 			"value": "localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "ACCESS_TOKEN",
+			"value": "?",
+			"type": "string"
+		},
+		{
+			"key": "REFRESH_TOKEN",
+			"value": "?",
 			"type": "string"
 		}
 	]

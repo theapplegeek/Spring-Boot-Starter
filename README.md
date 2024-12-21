@@ -36,6 +36,7 @@ spring_starter_pack
     │   ├── payload => common HTTP request and response payloads
     │   └── util => common utility classes
     ├── email
+    ├── permission
     ├── role
     ├── security
     ├── token
@@ -62,10 +63,11 @@ spring_starter_pack
 - Spring Boot DevTools
 - Spring Docker Compose
 - Spring Boot Test
-- PostgreSQL Driver
+- JDBC PostgreSQL Driver
 - Lombok
 - Mapstruct
 - RabbitMQ
+- Spotless
 
 ## Docker Compose Integration
 This project includes Docker Compose integration to run the `compose.yaml` file automatically when start the application.
