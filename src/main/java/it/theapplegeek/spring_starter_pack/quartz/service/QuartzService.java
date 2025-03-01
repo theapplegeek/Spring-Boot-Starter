@@ -4,6 +4,7 @@ import it.theapplegeek.spring_starter_pack.common.annotation.QuartzJob;
 import it.theapplegeek.spring_starter_pack.common.exception.BadRequestException;
 import it.theapplegeek.spring_starter_pack.common.exception.InternalServerErrorException;
 import it.theapplegeek.spring_starter_pack.common.exception.NotFoundException;
+import it.theapplegeek.spring_starter_pack.quartz.error.QuartzErrorMessage;
 import it.theapplegeek.spring_starter_pack.quartz.payload.JobInfo;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,7 @@ public class QuartzService {
         }
       }
     } catch (SchedulerException e) {
-      throw new InternalServerErrorException("Error on get jobs");
+      throw new InternalServerErrorException(QuartzErrorMessage.GET_JOB_LIST_ERROR);
     }
 
     return jobList;
@@ -58,13 +59,13 @@ public class QuartzService {
       JobKey jobKey = new JobKey(jobName, jobGroup);
 
       if (!scheduler.checkExists(jobKey)) {
-        throw new NotFoundException("Job " + jobGroup + "." + jobName + " not found");
+        throw new NotFoundException(QuartzErrorMessage.JOB_NOT_FOUND);
       }
 
       JobDetail jobDetail = scheduler.getJobDetail(jobKey);
       QuartzJob annotation = jobDetail.getJobClass().getAnnotation(QuartzJob.class);
 
-      validateAnnotation(jobName, jobGroup, annotation);
+      validateAnnotation(annotation);
       validateCronExpression(cronExpression);
 
       Trigger existingTrigger =
@@ -79,21 +80,20 @@ public class QuartzService {
         Trigger newTrigger = createTrigger(jobDetail, jobKey, cronExpression);
         this.scheduler.rescheduleJob(existingTrigger.getKey(), newTrigger);
       } else {
-        throw new BadRequestException("Trigger not found");
+        throw new BadRequestException(QuartzErrorMessage.TRIGGER_NOT_FOUND);
       }
     } catch (SchedulerException e) {
-      throw new InternalServerErrorException("Error on reschedule job " + jobGroup + "." + jobName);
+      throw new InternalServerErrorException(QuartzErrorMessage.SCHEDULE_JOB_ERROR);
     }
   }
 
-  private static void validateAnnotation(String jobName, String jobGroup, QuartzJob annotation) {
+  private static void validateAnnotation(QuartzJob annotation) {
     if (annotation == null) {
-      throw new InternalServerErrorException(
-          "Job " + jobGroup + "." + jobName + " is not managed by QuartzJob");
+      throw new InternalServerErrorException(QuartzErrorMessage.JOB_NOT_MANAGED);
     }
 
     if (annotation.jobType() == null || annotation.jobType() != QuartzJob.JobType.USER_CONFIG) {
-      throw new BadRequestException("Job " + jobGroup + "." + jobName + " can't be rescheduled");
+      throw new BadRequestException(QuartzErrorMessage.JOB_CANT_BE_RESCHEDULED);
     }
   }
 
