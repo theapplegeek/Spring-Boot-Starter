@@ -37,16 +37,31 @@ spring:
     virtual-host: /
   thymeleaf:
     check-template-location: false
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceId: AUTO
+            instanceName: QuartzScheduler
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            isClustered: true
 
 application:
   frontend:
     url: http://localhost:4200
   security:
     jwt:
-      # todo: CHANGE THIS SECRET KEY
       secret-key: 6Nh/KwqZCwuhnUphPKq7ydlLVUYtUDgn4vqSuzJ9B/o=
       expiration: 86400000 # 1 day
       refresh-token:
         expiration: 604800000 # 7 days
       reset-password:
         expiration: 900000 # 15 minutes
+  cron-job:
+    clean-expired-token: "0 3 1 * * ? *"
+    myJob: "*/5 * * * * ? *"

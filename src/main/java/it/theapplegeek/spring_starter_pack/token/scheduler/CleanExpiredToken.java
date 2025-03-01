@@ -1,25 +1,28 @@
 package it.theapplegeek.spring_starter_pack.token.scheduler;
 
+import it.theapplegeek.spring_starter_pack.common.annotation.QuartzJob;
 import it.theapplegeek.spring_starter_pack.token.repository.TokenRepository;
 import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
-import lombok.extern.java.Log;
-import org.springframework.scheduling.annotation.Scheduled;
+import lombok.RequiredArgsConstructor;
+import org.quartz.DisallowConcurrentExecution;
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
 import org.springframework.stereotype.Component;
 
 @Component
-@AllArgsConstructor
-@Log
-public class CleanExpiredToken {
+@RequiredArgsConstructor
+@DisallowConcurrentExecution
+@QuartzJob(
+    name = "cleanExpiredToken",
+    group = "token",
+    jobType = QuartzJob.JobType.APPLICATION_CONFIG,
+    cronExpressionConfigKey = "application.cron-job.clean-expired-token")
+public class CleanExpiredToken implements Job {
   private final TokenRepository tokenRepository;
 
-  @Scheduled(cron = "0 3 1 * * *", zone = "Europe/Rome")
-  public void cleanOldToken() {
-    log.info("Start clean old then 1 day token");
-
+  @Override
+  public void execute(JobExecutionContext jobExecutionContext) {
     LocalDateTime yesterday = LocalDateTime.now().minusDays(1);
     tokenRepository.deleteAllByExpirationDate(yesterday);
-
-    log.info("End clean old then 1 day token");
   }
 }

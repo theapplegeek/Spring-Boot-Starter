@@ -8,7 +8,7 @@ import it.theapplegeek.spring_starter_pack.user.model.User;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.AmqpHeaders;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-@Log
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
@@ -50,7 +50,7 @@ public class EmailService {
   public void handleTextMail(
       SimpleEmail simpleEmail, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
     try {
-      log.info("Sending email: " + simpleEmail.getTo());
+      log.info("Sending email: {}", simpleEmail.getTo());
       SimpleMailMessage message = new SimpleMailMessage();
       message.setFrom(from);
       message.setTo(simpleEmail.getTo());
@@ -65,7 +65,7 @@ public class EmailService {
       emailSender.send(message);
       channel.basicAck(tag, false);
     } catch (Exception e) {
-      log.warning("Error sending email: " + e.getMessage());
+      log.warn("Error sending email: {}", e.getMessage());
       channel.basicNack(tag, false, false);
       throw e;
     }
@@ -91,7 +91,7 @@ public class EmailService {
       Channel channel,
       @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
     try {
-      log.info("Sending email: " + resetPasswordEmail.getEmail());
+      log.info("Sending email: {}", resetPasswordEmail.getEmail());
       MimeMessage message = emailSender.createMimeMessage();
       MimeMessageHelper helper = new MimeMessageHelper(message, true);
       helper.setFrom(from);
@@ -109,7 +109,7 @@ public class EmailService {
       emailSender.send(message);
       channel.basicAck(tag, false);
     } catch (Exception e) {
-      log.warning("Error sending email: " + e.getMessage());
+      log.warn("Error sending email: {}", e.getMessage());
       channel.basicNack(tag, false, false);
       throw e;
     }

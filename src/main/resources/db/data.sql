@@ -9,7 +9,9 @@ VALUES ('USER_READ'),
        ('USER_CHANGE_PASSWORD'),
        ('USER_DELETE'),
        ('ROLE_READ'),
-       ('PERMISSION_READ');
+       ('PERMISSION_READ'),
+       ('QUARTZ_JOB_READ'),
+       ('QUARTZ_JOB_UPDATE');
 
 INSERT INTO role_permission (role_id, permission_id)
 VALUES (1, 4),
@@ -19,7 +21,9 @@ VALUES (1, 4),
        (2, 4),
        (2, 5),
        (2, 6),
-       (2, 7);
+       (2, 7),
+       (2, 8),
+       (2, 9);
 
 INSERT INTO user_profile (email, enabled, password, username, name, surname)
 VALUES ('admin@mail.com', true, '$2a$10$KWYO4oLjsHyydrEcXL.CseiYe144WLp5C6rczHwDjDU2eNWlaoU7S',
