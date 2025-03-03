@@ -13,11 +13,15 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @DisallowConcurrentExecution
 @QuartzJob(
-    name = "cleanExpiredToken",
-    group = "token",
+    name = CleanExpiredToken.JOB_NAME,
+    group = CleanExpiredToken.JOB_GROUP,
     jobType = QuartzJob.JobType.APPLICATION_CONFIG,
-    cronExpressionConfigKey = "application.cron-job.clean-expired-token")
+    cronExpressionConfigKey = CleanExpiredToken.CONFIG_KEY)
 public class CleanExpiredToken implements Job {
+  public static final String JOB_NAME = "cleanExpiredToken";
+  public static final String JOB_GROUP = "token";
+  public static final String CONFIG_KEY = "application.cron-job.clean-expired-token";
+
   private final TokenRepository tokenRepository;
 
   @Override
