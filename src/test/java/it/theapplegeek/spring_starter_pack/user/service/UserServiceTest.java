@@ -48,7 +48,7 @@ class UserServiceTest {
   Faker faker = new Faker();
 
   @Test
-  void canGetAllUsers() {
+  void shouldGetAllUsers() {
     // given
     int page = 0;
     int size = 10;
@@ -73,7 +73,7 @@ class UserServiceTest {
   }
 
   @Test
-  void canAddUserWithRole() {
+  void shouldAddUserWithRole() {
     // given
     UserDto userDto =
         UserDto.builder()
@@ -109,9 +109,9 @@ class UserServiceTest {
     // when
     userService.addUser(userDto);
 
+    // then
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
 
-    // then
     verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
     verify(userRepository, times(1)).existsByEmail(userDto.getEmail());
     verify(roleRepository, times(1)).existsById(role.getId());
@@ -134,7 +134,7 @@ class UserServiceTest {
   }
 
   @Test
-  void cantAddUserWithExistingUsername() {
+  void shouldNotAddUserWithExistingUsername() {
     // given
     UserDto userDto = UserDto.builder().username(faker.name().username()).build();
     given(userRepository.existsByUsername(userDto.getUsername())).willReturn(true);
@@ -154,7 +154,7 @@ class UserServiceTest {
   }
 
   @Test
-  void cantAddUserWithExistingEmail() {
+  void shouldNotAddUserWithExistingEmail() {
     // given
     UserDto userDto = UserDto.builder().email(faker.internet().emailAddress()).build();
     given(userRepository.existsByEmail(userDto.getEmail())).willReturn(true);
@@ -174,7 +174,7 @@ class UserServiceTest {
   }
 
   @Test
-  void canUpdateUser() {
+  void shouldUpdateUser() {
     // given
     Long userId = 1L;
     UserDto userDto =
@@ -218,7 +218,7 @@ class UserServiceTest {
   }
 
   @Test
-  void canUpdateUserWithRoleAndSameUsernameAndSameEmail() {
+  void shouldUpdateUserWithRoleAndSameUsernameAndSameEmail() {
     // given
     Long userId = 1L;
     RoleDto adminRoleDto = RoleDto.builder().id(2L).build();
@@ -264,9 +264,9 @@ class UserServiceTest {
     // when
     userService.updateUser(userId, userDto);
 
+    // then
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
 
-    // then
     verify(userRepository, times(1)).findById(userId);
     verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
     verify(userRepository, times(1)).existsByEmail(userDto.getEmail());
@@ -282,7 +282,7 @@ class UserServiceTest {
   }
 
   @Test
-  void canUpdateUserWithRoleWhenRoleIdIsNullAndSameUsernameAndSameEmail() {
+  void shouldUpdateUserWithRoleWhenRoleIdIsNullAndSameUsernameAndSameEmail() {
     // given
     Long userId = 1L;
     RoleDto roleDto = RoleDto.builder().build();
@@ -335,7 +335,7 @@ class UserServiceTest {
   }
 
   @Test
-  void cantUpdateUserWithDifferentAndExistingUsername() {
+  void shouldNotUpdateUserWithDifferentAndExistingUsername() {
     // given
     Long userId = 1L;
     UserDto userDto = UserDto.builder().username(faker.name().username()).build();
@@ -360,7 +360,7 @@ class UserServiceTest {
   }
 
   @Test
-  void canUpdateUserWithDifferentUsernameAndNotExistingUsername() {
+  void shouldUpdateUserWithDifferentUsernameAndNotExistingUsername() {
     // given
     Long userId = 1L;
     UserDto userDto = UserDto.builder().username(faker.name().username()).build();
@@ -385,7 +385,7 @@ class UserServiceTest {
   }
 
   @Test
-  void cantUpdateUserWithDifferentAndExistingEmail() {
+  void shouldNotUpdateUserWithDifferentAndExistingEmail() {
     // given
     Long userId = 1L;
     UserDto userDto = UserDto.builder().email(faker.internet().emailAddress()).build();
@@ -410,7 +410,7 @@ class UserServiceTest {
   }
 
   @Test
-  void canChangePassword() {
+  void shouldChangePassword() {
     // given
     Long userId = 1L;
     UserLogged userLogged = UserLogged.builder().id(userId).build();
@@ -424,9 +424,9 @@ class UserServiceTest {
     // when
     userService.changePassword(userLogged, oldPassword, newPassword);
 
+    // then
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
 
-    // then
     verify(userRepository, times(1)).findById(userId);
     verify(passwordEncoder, times(1)).encode(newPassword);
     verify(userRepository, times(1)).saveAndFlush(userCaptor.capture());
@@ -435,7 +435,7 @@ class UserServiceTest {
   }
 
   @Test
-  void cantChangePasswordWithWrongOldPassword() {
+  void shouldNotChangePasswordWithWrongOldPassword() {
     // given
     Long userId = 1L;
     UserLogged userLogged = UserLogged.builder().id(userId).build();
@@ -458,7 +458,7 @@ class UserServiceTest {
   }
 
   @Test
-  void canDeleteUser() {
+  void shouldDeleteUser() {
     // given
     Long userId = 1L;
     User user = User.builder().id(userId).build();

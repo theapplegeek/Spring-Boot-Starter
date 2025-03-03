@@ -18,6 +18,7 @@ class RoleServiceTest {
 
   @Test
   void shouldGetAllRoles() {
+    // given
     // when
     roleService.getAllRoles();
 

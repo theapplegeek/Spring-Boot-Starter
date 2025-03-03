@@ -27,7 +27,7 @@ class CleanExpiredTokenIntegrationTest {
           .withUsername("myuser")
           .withPassword("Password1!")
           .withInitScript("db/data.sql");
-  
+
   @Autowired private Scheduler scheduler;
 
   @BeforeEach

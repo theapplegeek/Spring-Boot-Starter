@@ -20,7 +20,11 @@ class CleanExpiredTokenTest {
 
   @Test
   void shouldDeleteAllExpiredTokens() {
+    // given
+    // when
     cleanExpiredToken.execute(jobExecutionContext);
+
+    // then
     verify(tokenRepository, times(1)).deleteAllByExpirationDate(any(LocalDateTime.class));
   }
 }

@@ -35,7 +35,7 @@ class UserRepositoryTest {
   @Autowired UserRoleRepository userRoleRepository;
   final Faker faker = new Faker();
 
-  private User generateAndSaveUser() {
+  private void generateAndSaveUser() {
     User user =
         userRepository.save(
             User.builder()
@@ -58,7 +58,6 @@ class UserRepositoryTest {
                 .build());
 
     user.getUserRoles().add(userRole);
-    return user;
   }
 
   @Test
@@ -83,6 +82,7 @@ class UserRepositoryTest {
 
   @Test
   void shouldFindAllWithSpecificationAndPageable() {
+    // given
     UserDto search =
         UserDto.builder().username("adm").email("admin@").name("Admin").surname("Ad").build();
     Pageable pageable =
@@ -93,7 +93,11 @@ class UserRepositoryTest {
             .direction("asc")
             .build()
             .asPageable();
+
+    // when
     Page<User> users = userRepository.findAll(search, pageable);
+
+    // then
     assertEquals(1, users.getTotalElements());
     assertEquals("Admin", users.getContent().getFirst().getName());
     assertEquals("admin", users.getContent().getFirst().getUsername());
@@ -102,6 +106,7 @@ class UserRepositoryTest {
 
   @Test
   void shouldFindAllByRoleWithSpecificationAndPageable() {
+    // given
     UserDto search = UserDto.builder().roles(List.of(RoleDto.builder().id(2L).build())).build();
     Pageable pageable =
         PagedRequestParams.builder()
@@ -111,7 +116,11 @@ class UserRepositoryTest {
             .direction("asc")
             .build()
             .asPageable();
+
+    // when
     Page<User> users = userRepository.findAll(search, pageable);
+
+    // then
     assertEquals(1, users.getTotalElements());
     assertEquals("Admin", users.getContent().getFirst().getName());
     assertEquals("admin", users.getContent().getFirst().getUsername());
@@ -121,6 +130,7 @@ class UserRepositoryTest {
   @Test
   @Rollback
   void shouldFindAllWithPageable() {
+    // given
     generateAndSaveUser();
     generateAndSaveUser();
 
@@ -132,7 +142,11 @@ class UserRepositoryTest {
             .direction("asc")
             .build()
             .asPageable();
+
+    // when
     Page<User> users = userRepository.findAll(pageable);
+
+    // then
     assertEquals(4, users.getTotalElements());
     assertEquals(2, users.getTotalPages());
     assertEquals(2, users.getSize());
@@ -141,7 +155,11 @@ class UserRepositoryTest {
 
   @Test
   void shouldFindByUsername() {
+    // given
+    // when
     Optional<User> user = userRepository.findByUsername("user");
+
+    // then
     assertTrue(user.isPresent());
     assertEquals("User", user.get().getName());
     assertEquals("user", user.get().getUsername());
@@ -155,7 +173,11 @@ class UserRepositoryTest {
 
   @Test
   void shouldFindByEmailAndEnabledIsTrue() {
+    // given
+    // when
     Optional<User> admin = userRepository.findByEmailAndEnabledIsTrue("admin@mail.com");
+
+    // then
     assertTrue(admin.isPresent());
     assertEquals("Admin", admin.get().getName());
     assertEquals("admin", admin.get().getUsername());
@@ -170,9 +192,13 @@ class UserRepositoryTest {
   @Test
   @Rollback
   void shouldNotFindByEmailAndEnabledIsTrueWhenDisabled() {
+    // given
     User user = userRepository.findByUsername("user").orElseThrow();
     user.setEnabled(false);
     userRepository.save(user);
+
+    // when
+    // then
     assertTrue(userRepository.findByEmailAndEnabledIsTrue("user@mail.com").isEmpty());
   }
 }
