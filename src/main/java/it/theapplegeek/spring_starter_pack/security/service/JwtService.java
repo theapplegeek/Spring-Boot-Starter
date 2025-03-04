@@ -2,7 +2,6 @@ package it.theapplegeek.spring_starter_pack.security.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import it.theapplegeek.spring_starter_pack.permission.model.Permission;
@@ -31,15 +30,6 @@ public class JwtService {
 
   @Value("${application.security.jwt.refresh-token.expiration}")
   private long resetPasswordExpiration;
-
-  public String extractUsername(String token) {
-    return extractClaim(token, Claims::getSubject);
-  }
-
-  public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-    final Claims claims = extractAllClaims(token);
-    return claimsResolver.apply(claims);
-  }
 
   public String generateToken(User userDetails) {
     HashMap<String, Object> claims = new HashMap<>();
@@ -123,7 +113,7 @@ public class JwtService {
         .subject(userDetails.getUsername())
         .issuedAt(new Date(System.currentTimeMillis()))
         .expiration(new Date(System.currentTimeMillis() + expiration))
-        .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+        .signWith(getSignInKey())
         .compact();
   }
 
@@ -136,8 +126,17 @@ public class JwtService {
     return extractExpiration(token).before(new Date());
   }
 
+  public String extractUsername(String token) {
+    return extractClaim(token, Claims::getSubject);
+  }
+
   public Date extractExpiration(String token) {
     return extractClaim(token, Claims::getExpiration);
+  }
+
+  public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    final Claims claims = extractAllClaims(token);
+    return claimsResolver.apply(claims);
   }
 
   private Claims extractAllClaims(String token) {
