@@ -37,6 +37,7 @@ spring_starter_pack
     │   └── util => common utility classes
     ├── email
     ├── permission
+    |-- quartz
     ├── role
     ├── security
     ├── token
@@ -68,6 +69,7 @@ spring_starter_pack
 - Mapstruct
 - RabbitMQ
 - Spotless
+- Quartz
 
 ## Docker Compose Integration
 This project includes Docker Compose integration to run the `compose.yaml` file automatically when start the application.

@@ -68,13 +68,16 @@ Relationships:
 - `role_permission`: `role` can have multiple `permissions`; `permission` belongs to multiple `roles`.
 - `token.user_id`: `user` can have multiple `tokens`; `token` belongs to only one `user`.
 
-NOTE: Use `data.sql` file to insert the default data in the database.
+NOTE: 
+- Use `data.sql` file to insert the default data in the database.
+- There are tables with `qrtz_` prefix in the database created and used by Quartz.
 
 ## REST APIs
 - `/api/auth**`: Authentication APIs.
 - `/api/user**`: Users Management APIs.
 - `/api/role**`: Roles Management APIs.
 - `/api/permission**`: Permissions Management APIs.
+- `/api/quartz**`: Quartz Jobs Management APIs.
 
 You can use Postman to view and test the APIs. Import the collection from `API.postman_collection.json`.
 
@@ -136,6 +139,8 @@ Each role has permissions, which defines the access level of the role.
 - `USER_DELETE`: Can access the resources `DELETE /api/user/:userId`.
 - `ROLE_READ`: Can access the resources `GET /api/role`.
 - `PERMISSION_READ`: Can access the resources `GET /api/permission` and `GET /api/permission/role/:roleId`.
+- `QUARTZ_JOB_READ`: Can access the resources `GET /api/quartz/job`.
+- `QUARTZ_JOB_UPDATE`: Can access the resources `POST /api/quartz/job/reschedule`.
 
 ### Default Roles
 - `ADMIN`: <br>
@@ -147,6 +152,8 @@ Each role has permissions, which defines the access level of the role.
     - `USER_DELETE`
     - `ROLE_READ`
     - `PERMISSION_READ`
+    - `QUARTZ_JOB_READ`
+    - `QUARTZ_JOB_UPDATE`
 - `USER`: <br>
     Permissions:
     - `USER_CHANGE_PASSWORD`
@@ -217,6 +224,15 @@ You can change the Thymeleaf template configurations in `email/configuration/Ema
 
 #### RabbitMQ Configuration
 You can change the RabbitMQ configurations in `common/configuration/RabbitMqConfig.java` file.
+
+## Quartz Jobs
+Quartz is used to schedule the jobs.
+
+### How to use Quartz?
+1. Create a new job class implementing `Job` interface.
+2. Annotate the job class with `@QuartzJob` annotation.
+
+NOTE: For more info about annotation `@QuartzJob`, go to [Annotations](#annotations) section.
 
 ## HTTP Error Exception
 Custom HTTP exceptions are used to return the error messages in the response.
@@ -295,3 +311,37 @@ You can find the list of error messages classes in `common/exception` package.
     // Code
   }
   ```
+- `@QuartzJob`: Annotation to schedule the quartz job. <br>
+  Annotation parameters:
+  - `name`: Name of the quartz job.
+  - `group`: Group of the quartz job.
+  - `description`: Description of the quartz job.
+  - `jobType`: Type of the quartz job.
+  - `cronConfigKey`: Key of the cron expression in the application.yml file.
+  - `defaultCronExpression`: Default cron expression. <br>
+  
+  JobType:
+  - `APPLICATION_CONFIG`: This job use the application.yml file to get the cron expression, when the application start the job will be scheduled or rescheduled according to the cron expression automatically.
+    ```java
+    @QuartzJob(
+        name = "my-job",
+        group = "my-job-group",
+        description = "My Job Description",
+        jobType = JobType.APPLICATION_CONFIG,
+        cronConfigKey = "application.cron-job.my-job")
+    public class MyJob implements Job {
+      // Code
+    }
+    ```
+  - `USER_CONFIG`: This job use the API `/api/quartz/job/reschedule` to reschedule the job according to the cron expression provided by the user. For the first time, the job will be scheduled according to the cron expression provided in `defaultCronExpression` parameter.
+    ```java
+    @QuartzJob(
+        name = "my-job",
+        group = "my-job-group",
+        description = "My Job Description",
+        jobType = JobType.USER_CONFIG,
+        defaultCronExpression = "0 0 0 * * ?")
+    public class MyJob implements Job {
+      // Code
+    }
+    ```
