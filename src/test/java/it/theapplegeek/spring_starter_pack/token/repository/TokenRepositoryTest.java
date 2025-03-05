@@ -46,13 +46,13 @@ class TokenRepositoryTest {
   @Test
   @Rollback
   void shouldFindTokenByToken() {
-    // given
+    // Given
     User user = userRepository.findByUsername("admin").orElseThrow();
     String jwtToken = faker.internet().uuid();
     insertJwtTokenForUser(user, jwtToken);
 
-    // when
-    // then
+    // When
+    // Then
     assertTrue(tokenRepository.findByToken(jwtToken).isPresent());
     assertEquals(jwtToken, tokenRepository.findByToken(jwtToken).get().getToken());
   }
@@ -65,50 +65,50 @@ class TokenRepositoryTest {
   @Test
   @Rollback
   void shouldDeleteAllByExpirationDate() {
-    // given
+    // Given
     User user = userRepository.findByUsername("admin").orElseThrow();
     String jwtToken = faker.internet().uuid();
     String jwtToken2 = faker.internet().uuid();
     insertJwtTokenForUser(user, jwtToken);
     insertJwtTokenForUser(user, jwtToken2);
 
-    // when
+    // When
     tokenRepository.deleteAllByExpirationDate(LocalDateTime.now().plusMonths(1));
 
-    // then
+    // Then
     assertTrue(tokenRepository.findAll().isEmpty());
   }
 
   @Test
   @Rollback
   void shouldRevokeAllByUserIdAndType() {
-    // given
+    // Given
     User user = userRepository.findByUsername("admin").orElseThrow();
     String jwtToken = faker.internet().uuid();
     String jwtToken2 = faker.internet().uuid();
     insertJwtTokenForUser(user, jwtToken);
     insertJwtTokenForUser(user, jwtToken2);
 
-    // when
+    // When
     tokenRepository.revokeAllByUserIdAndType(user.getId(), TokenType.BEARER);
 
-    // then
+    // Then
     assertTrue(tokenRepository.findAll().stream().allMatch(Token::getRevoked));
   }
 
   @Test
   @Rollback
   void shouldFindTokenByTokenAndTokenTypeAndRevokedIsFalse() {
-    // given
+    // Given
     User user = userRepository.findByUsername("admin").orElseThrow();
     String jwtToken = faker.internet().uuid();
     insertJwtTokenForUser(user, jwtToken);
 
-    // when
+    // When
     Optional<Token> token =
         tokenRepository.findByTokenAndTokenTypeAndRevokedIsFalse(jwtToken, TokenType.BEARER);
 
-    // then
+    // Then
     assertTrue(token.isPresent());
     assertEquals(jwtToken, token.get().getToken());
   }
@@ -124,15 +124,15 @@ class TokenRepositoryTest {
   @Test
   @Rollback
   void shouldNotFindTokenByTokenAndTokenTypeAndRevokedIsTrue() {
-    // given
+    // Given
     User user = userRepository.findByUsername("admin").orElseThrow();
     String jwtToken = faker.internet().uuid();
     insertJwtTokenForUser(user, jwtToken);
 
-    // when
+    // When
     tokenRepository.revokeAllByUserIdAndType(user.getId(), TokenType.BEARER);
 
-    // then
+    // Then
     assertFalse(
         tokenRepository
             .findByTokenAndTokenTypeAndRevokedIsFalse(jwtToken, TokenType.BEARER)
@@ -142,13 +142,13 @@ class TokenRepositoryTest {
   @Test
   @Rollback
   void shouldNotFindTokenByTokenAndTokenTypeAndRevokedIsFalseWithDifferentTokenType() {
-    // given
+    // Given
     User user = userRepository.findByUsername("admin").orElseThrow();
     String jwtToken = faker.internet().uuid();
     insertJwtTokenForUser(user, jwtToken);
 
-    // when
-    // then
+    // When
+    // Then
     assertFalse(
         tokenRepository
             .findByTokenAndTokenTypeAndRevokedIsFalse(jwtToken, TokenType.RESET_PASSWORD)

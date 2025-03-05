@@ -1,6 +1,7 @@
 package it.theapplegeek.spring_starter_pack.common.exception;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import it.theapplegeek.spring_starter_pack.common.payload.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -79,7 +80,8 @@ public class GlobalExceptionHandler {
   @ExceptionHandler({
     AuthenticationException.class,
     UnauthorizedException.class,
-    ExpiredJwtException.class
+    ExpiredJwtException.class,
+    MalformedJwtException.class,
   })
   public ResponseEntity<ErrorResponse> handleAuthenticationException(
       RuntimeException ex, WebRequest request) {

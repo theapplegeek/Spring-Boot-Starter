@@ -4,6 +4,7 @@ import it.theapplegeek.spring_starter_pack.auth.service.AuthService;
 import it.theapplegeek.spring_starter_pack.common.exception.BadRequestException;
 import it.theapplegeek.spring_starter_pack.common.payload.JwtResponse;
 import it.theapplegeek.spring_starter_pack.common.payload.LoginRequest;
+import jakarta.validation.Valid;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,7 @@ public class AuthController {
   private final AuthService authService;
 
   @PostMapping("login")
-  public JwtResponse authenticate(@RequestBody LoginRequest request) {
+  public JwtResponse authenticate(@RequestBody @Valid LoginRequest request) {
     return authService.authenticate(request);
   }
 

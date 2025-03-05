@@ -18,11 +18,11 @@ class RoleServiceTest {
 
   @Test
   void shouldGetAllRoles() {
-    // given
-    // when
+    // Given
+    // When
     roleService.getAllRoles();
 
-    // then
+    // Then
     verify(roleRepository, times(1)).findAll();
   }
 }

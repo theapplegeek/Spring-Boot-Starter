@@ -1,7 +1,7 @@
 package it.theapplegeek.spring_starter_pack.security.service;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -22,23 +22,24 @@ class LoadUserFromUsernameServiceTest {
 
   @Test
   void shouldLoadUserFromUsername() {
-    // given
+    // Given
     User user = mock(User.class);
     given(userRepository.findByUsername("admin")).willReturn(Optional.ofNullable(user));
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(loadUserFromUsernameService.loadUserFromUsername("admin")).isEqualTo(user);
   }
 
   @Test
   void shouldNotLoadUserFromUsername() {
-    // given
+    // Given
     given(userRepository.findByUsername("admin")).willReturn(Optional.empty());
 
-    // when
-    // then
-    assertThatThrownBy(() -> loadUserFromUsernameService.loadUserFromUsername("admin"))
-        .isInstanceOf(UsernameNotFoundException.class);
+    // When
+    // Then
+    assertThrows(
+        UsernameNotFoundException.class,
+        () -> loadUserFromUsernameService.loadUserFromUsername("admin"));
   }
 }

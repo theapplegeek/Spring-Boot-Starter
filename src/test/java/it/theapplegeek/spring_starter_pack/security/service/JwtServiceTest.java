@@ -1,6 +1,5 @@
 package it.theapplegeek.spring_starter_pack.security.service;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -40,48 +39,48 @@ class JwtServiceTest {
   }
 
   @Test
-  void shouldGenerateTokenSuccessfully() {
-    // given
+  void shouldGenerateToken() {
+    // Given
     given(userDetails.getUsername()).willReturn("testUser");
 
-    // when
+    // When
     String token = jwtService.generateToken(userDetails);
 
-    // then
+    // Then
     assertNotNull(token);
     assertFalse(token.isEmpty());
   }
 
   @Test
   void shouldExtractUsernameFromToken() {
-    // given
+    // Given
     when(userDetails.getUsername()).thenReturn("testUser");
     String token = jwtService.generateToken(userDetails);
 
-    // when
+    // When
     String extractedUsername = jwtService.extractUsername(token);
 
-    // then
+    // Then
     assertEquals("testUser", extractedUsername);
   }
 
   @Test
-  void shouldValidateTokenSuccessfully() {
-    // given
+  void shouldValidateToken() {
+    // Given
     given(userDetails.getUsername()).willReturn("testUser");
     String token = jwtService.generateToken(userDetails);
 
-    // when
+    // When
     boolean isValid = jwtService.isTokenValid(token, userDetails);
 
-    // then
+    // Then
     assertTrue(isValid);
   }
 
   @Test
   @SneakyThrows
   void shouldDetectExpiredToken() {
-    // given
+    // Given
     Method getSignInKeyMethod = JwtService.class.getDeclaredMethod("getSignInKey");
     getSignInKeyMethod.setAccessible(true);
     SecretKey key = (SecretKey) getSignInKeyMethod.invoke(jwtService);
@@ -94,15 +93,14 @@ class JwtServiceTest {
             .signWith(key)
             .compact();
 
-    // when
-    // then
-    assertThatThrownBy(() -> jwtService.extractUsername(expiredToken))
-        .isInstanceOf(ExpiredJwtException.class);
+    // When
+    // Then
+    assertThrows(ExpiredJwtException.class, () -> jwtService.extractUsername(expiredToken));
   }
 
   @Test
   void shouldDetectInvalidSignatureToken() {
-    // given
+    // Given
     SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
     String invalidToken =
         Jwts.builder()
@@ -112,21 +110,20 @@ class JwtServiceTest {
             .signWith(key)
             .compact();
 
-    // when
-    // then
-    assertThatThrownBy(() -> jwtService.extractUsername(invalidToken))
-        .isInstanceOf(SignatureException.class);
+    // When
+    // Then
+    assertThrows(SignatureException.class, () -> jwtService.extractUsername(invalidToken));
   }
 
   @Test
-  void shouldGenerateRefreshTokenSuccessfully() {
-    // given
+  void shouldGenerateRefreshToken() {
+    // Given
     given(userDetails.getUsername()).willReturn("testUser");
 
-    // when
+    // When
     String refreshToken = jwtService.generateRefreshToken(userDetails);
 
-    // then
+    // Then
     assertNotNull(refreshToken);
     assertFalse(refreshToken.isEmpty());
   }

@@ -49,7 +49,7 @@ class UserServiceTest {
 
   @Test
   void shouldGetAllUsers() {
-    // given
+    // Given
     int page = 0;
     int size = 10;
     String sort = "username";
@@ -64,17 +64,17 @@ class UserServiceTest {
             .build()
             .asPageable();
 
-    // when
+    // When
     userService.getAllUsers(page, size, sort, direction, userDto);
 
-    // then
+    // Then
     verify(userRepository, times(1)).findAll(userDto, pageable);
     verify(userPagedMapper, times(1)).toDto(any(), any(UserMapper.class));
   }
 
   @Test
   void shouldAddUserWithRole() {
-    // given
+    // Given
     UserDto userDto =
         UserDto.builder()
             .username(faker.name().username())
@@ -106,10 +106,10 @@ class UserServiceTest {
     given(userRepository.save(any(User.class))).willReturn(user);
     given(userRoleRepository.save(any())).willReturn(userRole);
 
-    // when
+    // When
     userService.addUser(userDto);
 
-    // then
+    // Then
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
 
     verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
@@ -135,12 +135,12 @@ class UserServiceTest {
 
   @Test
   void shouldNotAddUserWithExistingUsername() {
-    // given
+    // Given
     UserDto userDto = UserDto.builder().username(faker.name().username()).build();
     given(userRepository.existsByUsername(userDto.getUsername())).willReturn(true);
 
-    // when
-    // then
+    // When
+    // Then
     assertThrows(
         BadRequestException.class,
         () -> userService.addUser(userDto),
@@ -155,12 +155,12 @@ class UserServiceTest {
 
   @Test
   void shouldNotAddUserWithExistingEmail() {
-    // given
+    // Given
     UserDto userDto = UserDto.builder().email(faker.internet().emailAddress()).build();
     given(userRepository.existsByEmail(userDto.getEmail())).willReturn(true);
 
-    // when
-    // then
+    // When
+    // Then
     assertThrows(
         BadRequestException.class,
         () -> userService.addUser(userDto),
@@ -175,7 +175,7 @@ class UserServiceTest {
 
   @Test
   void shouldUpdateUser() {
-    // given
+    // Given
     Long userId = 1L;
     UserDto userDto =
         UserDto.builder().name(faker.name().firstName()).surname(faker.name().lastName()).build();
@@ -203,10 +203,10 @@ class UserServiceTest {
     given(userMapper.partialUpdate(userDto, user)).willReturn(user);
     given(userRepository.saveAndFlush(user)).willReturn(user);
 
-    // when
+    // When
     userService.updateUser(userId, userDto);
 
-    // then
+    // Then
     verify(userRepository, times(1)).findById(userId);
     verify(userRepository, never()).existsByUsername(anyString());
     verify(userRepository, never()).existsByEmail(anyString());
@@ -219,7 +219,7 @@ class UserServiceTest {
 
   @Test
   void shouldUpdateUserWithRoleAndSameUsernameAndSameEmail() {
-    // given
+    // Given
     Long userId = 1L;
     RoleDto adminRoleDto = RoleDto.builder().id(2L).build();
     UserDto userDto =
@@ -261,10 +261,10 @@ class UserServiceTest {
     given(userMapper.partialUpdate(eq(userDto), any(User.class))).willReturn(user);
     given(userRepository.saveAndFlush(user)).willReturn(user);
 
-    // when
+    // When
     userService.updateUser(userId, userDto);
 
-    // then
+    // Then
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
 
     verify(userRepository, times(1)).findById(userId);
@@ -283,7 +283,7 @@ class UserServiceTest {
 
   @Test
   void shouldUpdateUserWithRoleWhenRoleIdIsNullAndSameUsernameAndSameEmail() {
-    // given
+    // Given
     Long userId = 1L;
     RoleDto roleDto = RoleDto.builder().build();
     UserDto userDto =
@@ -318,8 +318,8 @@ class UserServiceTest {
     given(userRepository.existsByUsername(userDto.getUsername())).willReturn(false);
     given(userRepository.existsByEmail(userDto.getEmail())).willReturn(false);
 
-    // when
-    // then
+    // When
+    // Then
     assertThrows(
         BadRequestException.class,
         () -> userService.updateUser(userId, userDto),
@@ -336,15 +336,15 @@ class UserServiceTest {
 
   @Test
   void shouldNotUpdateUserWithDifferentAndExistingUsername() {
-    // given
+    // Given
     Long userId = 1L;
     UserDto userDto = UserDto.builder().username(faker.name().username()).build();
     User user = User.builder().username(faker.name().username()).build();
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(userRepository.existsByUsername(userDto.getUsername())).willReturn(true);
 
-    // when
-    // then
+    // When
+    // Then
     assertThrows(
         BadRequestException.class,
         () -> userService.updateUser(userId, userDto),
@@ -361,7 +361,7 @@ class UserServiceTest {
 
   @Test
   void shouldUpdateUserWithDifferentUsernameAndNotExistingUsername() {
-    // given
+    // Given
     Long userId = 1L;
     UserDto userDto = UserDto.builder().username(faker.name().username()).build();
     User user = User.builder().id(1L).username(faker.name().username()).build();
@@ -370,10 +370,10 @@ class UserServiceTest {
     given(userMapper.partialUpdate(userDto, user)).willReturn(user);
     given(userRepository.saveAndFlush(user)).willReturn(user);
 
-    // when
+    // When
     userService.updateUser(userId, userDto);
 
-    // then
+    // Then
     verify(userRepository, times(1)).findById(userId);
     verify(userRepository, times(1)).existsByUsername(userDto.getUsername());
     verify(userRepository, never()).existsByEmail(anyString());
@@ -386,15 +386,15 @@ class UserServiceTest {
 
   @Test
   void shouldNotUpdateUserWithDifferentAndExistingEmail() {
-    // given
+    // Given
     Long userId = 1L;
     UserDto userDto = UserDto.builder().email(faker.internet().emailAddress()).build();
     User user = User.builder().email(faker.internet().emailAddress()).build();
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(userRepository.existsByEmail(userDto.getEmail())).willReturn(true);
 
-    // when
-    // then
+    // When
+    // Then
     assertThrows(
         BadRequestException.class,
         () -> userService.updateUser(userId, userDto),
@@ -411,7 +411,7 @@ class UserServiceTest {
 
   @Test
   void shouldChangePassword() {
-    // given
+    // Given
     Long userId = 1L;
     UserLogged userLogged = UserLogged.builder().id(userId).build();
     String oldPassword = faker.internet().password();
@@ -421,10 +421,10 @@ class UserServiceTest {
     given(passwordEncoder.matches(oldPassword, user.getPassword())).willReturn(true);
     given(passwordEncoder.encode(newPassword)).willReturn(newPassword);
 
-    // when
+    // When
     userService.changePassword(userLogged, oldPassword, newPassword);
 
-    // then
+    // Then
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
 
     verify(userRepository, times(1)).findById(userId);
@@ -436,7 +436,7 @@ class UserServiceTest {
 
   @Test
   void shouldNotChangePasswordWithWrongOldPassword() {
-    // given
+    // Given
     Long userId = 1L;
     UserLogged userLogged = UserLogged.builder().id(userId).build();
     String oldPassword = faker.internet().password();
@@ -445,8 +445,8 @@ class UserServiceTest {
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(passwordEncoder.matches(oldPassword, user.getPassword())).willReturn(false);
 
-    // when
-    // then
+    // When
+    // Then
     assertThrows(
         BadRequestException.class,
         () -> userService.changePassword(userLogged, oldPassword, newPassword),
@@ -459,15 +459,15 @@ class UserServiceTest {
 
   @Test
   void shouldDeleteUser() {
-    // given
+    // Given
     Long userId = 1L;
     User user = User.builder().id(userId).build();
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
 
-    // when
+    // When
     userService.deleteUser(userId);
 
-    // then
+    // Then
     verify(userRepository, times(1)).findById(userId);
     verify(userRepository, times(1)).delete(user);
   }

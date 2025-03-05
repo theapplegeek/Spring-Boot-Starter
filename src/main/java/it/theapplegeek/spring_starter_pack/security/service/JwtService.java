@@ -54,6 +54,7 @@ public class JwtService {
     }
     claims.put("roles", roles);
     claims.put("permissions", permissions);
+    claims.put("jti", UUID.randomUUID().toString());
     return generateToken(claims, userDetails);
   }
 
@@ -99,11 +100,15 @@ public class JwtService {
   }
 
   public String generateRefreshToken(UserDetails userDetails) {
-    return buildToken(new HashMap<>(), userDetails, refreshExpiration);
+    HashMap<String, Object> claims = new HashMap<>();
+    claims.put("jti", UUID.randomUUID().toString());
+    return buildToken(claims, userDetails, refreshExpiration);
   }
 
   public String generateResetPasswordToken(UserDetails userDetails) {
-    return buildToken(new HashMap<>(), userDetails, resetPasswordExpiration);
+    HashMap<String, Object> claims = new HashMap<>();
+    claims.put("jti", UUID.randomUUID().toString());
+    return buildToken(claims, userDetails, resetPasswordExpiration);
   }
 
   private String buildToken(

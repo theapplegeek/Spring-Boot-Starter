@@ -73,8 +73,6 @@ class UserControllerTest {
         .convertTo(JwtResponse.class)
         .satisfies(jwtResponse -> assertThat(jwtResponse.getAccessToken()).isNotNull());
 
-    adminAccessToken = loginResult.getResponse().getContentAsString();
-
     adminAccessToken =
         mapper
             .readValue(loginResult.getResponse().getContentAsString(), JwtResponse.class)
@@ -100,11 +98,11 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_READ"})
   void shouldGetAllUsers() {
-    // given
+    // Given
     UserDto admin = userMapper.toDto(userRepository.findByUsername("admin").orElseThrow());
     UserDto user = userMapper.toDto(userRepository.findByUsername("user").orElseThrow());
 
-    // when
+    // When
     MvcTestResult result =
         mvc.post()
             .uri("/api/user/list")
@@ -114,7 +112,7 @@ class UserControllerTest {
             .param("direction", "asc")
             .exchange();
 
-    // then
+    // Then
     assertThat(result).hasStatusOk();
     assertThat(result)
         .bodyJson()
@@ -162,7 +160,7 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_READ"})
   void shouldGetAdminUserWithFilter() {
-    // given
+    // Given
     UserDto admin = userMapper.toDto(userRepository.findByUsername("admin").orElseThrow());
     UserDto filter =
         UserDto.builder()
@@ -174,7 +172,7 @@ class UserControllerTest {
             .enabled(true)
             .build();
 
-    // when
+    // When
     MvcTestResult result =
         mvc.post()
             .uri("/api/user/list")
@@ -186,7 +184,7 @@ class UserControllerTest {
             .content(mapper.writeValueAsString(filter))
             .exchange();
 
-    // then
+    // Then
     assertThat(result).hasStatusOk();
     assertThat(result)
         .bodyJson()
@@ -223,10 +221,10 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_READ"})
   void shouldNotGetUserWithWrongFilter() {
-    // given
+    // Given
     UserDto filter = UserDto.builder().username("wrong").build();
 
-    // when
+    // When
     MvcTestResult result =
         mvc.post()
             .uri("/api/user/list")
@@ -238,7 +236,7 @@ class UserControllerTest {
             .content(mapper.writeValueAsString(filter))
             .exchange();
 
-    // then
+    // Then
     assertThat(result).hasStatusOk();
     assertThat(result)
         .bodyJson()
@@ -264,11 +262,11 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_CREATE"})
   void shouldAddUser() {
-    // given
+    // Given
     UserDto userDto = generateUserDto();
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.post()
                 .uri("/api/user")
@@ -295,11 +293,11 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_CREATE"})
   void shouldNotAddUserWithWrongData() {
-    // given
+    // Given
     UserDto userDto = UserDto.builder().build();
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.post()
                 .uri("/api/user")
@@ -314,12 +312,12 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_CREATE"})
   void shouldNotAddUserWithWrongEmail() {
-    // given
+    // Given
     UserDto userDto = generateUserDto();
     userDto.setEmail("wrongFormat");
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.post()
                 .uri("/api/user")
@@ -334,12 +332,12 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_CREATE"})
   void shouldNotAddUserWithWrongRole() {
-    // given
+    // Given
     UserDto userDto = generateUserDto();
     userDto.setRoles(List.of(RoleDto.builder().id(3L).name("wrong").build()));
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.post()
                 .uri("/api/user")
@@ -354,12 +352,12 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_CREATE"})
   void shouldNotAddUserWithExistingUsername() {
-    // given
+    // Given
     UserDto userDto = generateUserDto();
     userDto.setUsername("admin");
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.post()
                 .uri("/api/user")
@@ -374,12 +372,12 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_CREATE"})
   void shouldNotAddUserWithExistingEmail() {
-    // given
+    // Given
     UserDto userDto = generateUserDto();
     userDto.setEmail("admin@mail.com");
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.post()
                 .uri("/api/user")
@@ -395,7 +393,7 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_UPDATE"})
   void shouldUpdateUser() {
-    // given
+    // Given
     User admin = userRepository.findByUsername("admin").orElseThrow();
     String oldHashedPassword = admin.getPassword();
     List<RoleDto> roles = new ArrayList<>();
@@ -411,8 +409,8 @@ class UserControllerTest {
             .enabled(false)
             .build();
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.put()
                 .uri("/api/user/{id}", admin.getId())
@@ -444,11 +442,11 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_UPDATE"})
   void shouldNotUpdateUserWithoutData() {
-    // given
+    // Given
     User admin = userRepository.findByUsername("admin").orElseThrow();
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.put().uri("/api/user/{id}", admin.getId()).contentType(MediaType.APPLICATION_JSON))
         .hasStatus(HttpStatus.BAD_REQUEST);
@@ -460,11 +458,11 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_UPDATE"})
   void shouldNotUpdateUserWithNotExistingUser() {
-    // given
+    // Given
     UserDto adminDto = generateUserDto();
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.put()
                 .uri("/api/user/{id}", 1000)
@@ -479,13 +477,13 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_UPDATE"})
   void shouldNotUpdateUserWithExistingUsername() {
-    // given
+    // Given
     User admin = userRepository.findByUsername("admin").orElseThrow();
     UserDto adminDto = generateUserDto();
     adminDto.setUsername("user");
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.put()
                 .uri("/api/user/{id}", admin.getId())
@@ -500,13 +498,13 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_UPDATE"})
   void shouldNotUpdateUserWithExistingEmail() {
-    // given
+    // Given
     User admin = userRepository.findByUsername("admin").orElseThrow();
     UserDto adminDto = generateUserDto();
     adminDto.setEmail("user@mail.com");
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.put()
                 .uri("/api/user/{id}", admin.getId())
@@ -521,13 +519,13 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_UPDATE"})
   void shouldNotUpdateUserWithWrongRole() {
-    // given
+    // Given
     User admin = userRepository.findByUsername("admin").orElseThrow();
     UserDto adminDto = generateUserDto();
     adminDto.setRoles(List.of(RoleDto.builder().id(3L).name("wrong").build()));
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.put()
                 .uri("/api/user/{id}", admin.getId())
@@ -540,7 +538,7 @@ class UserControllerTest {
   @Transactional
   @SneakyThrows
   void shouldChangePassword() {
-    // given
+    // Given
     String token = loginAdmin();
     User admin = userRepository.findByUsername("admin").orElseThrow();
     String oldHashedPassword = admin.getPassword();
@@ -549,8 +547,8 @@ class UserControllerTest {
     HttpHeaders headers = new HttpHeaders();
     headers.add("Authorization", "Bearer " + token);
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.put()
                 .uri("/api/user/change-password")
@@ -567,7 +565,7 @@ class UserControllerTest {
   @Transactional
   @SneakyThrows
   void shouldNotChangePasswordWithWrongPassword() {
-    // given
+    // Given
     String token = loginAdmin();
 
     Map<String, String> data =
@@ -575,8 +573,8 @@ class UserControllerTest {
     HttpHeaders headers = new HttpHeaders();
     headers.add("Authorization", "Bearer " + token);
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.put()
                 .uri("/api/user/change-password")
@@ -590,15 +588,15 @@ class UserControllerTest {
   @Transactional
   @SneakyThrows
   void shouldNotChangePasswordWithoutNewPassword() {
-    // given
+    // Given
     String token = loginAdmin();
 
     Map<String, String> data = Map.of("oldPassword", "Password");
     HttpHeaders headers = new HttpHeaders();
     headers.add("Authorization", "Bearer " + token);
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.put()
                 .uri("/api/user/change-password")
@@ -612,15 +610,15 @@ class UserControllerTest {
   @Transactional
   @SneakyThrows
   void shouldNotChangePasswordWithoutPassingOldPassword() {
-    // given
+    // Given
     String token = loginAdmin();
 
     Map<String, String> data = Map.of("newPassowrd", "Password123");
     HttpHeaders headers = new HttpHeaders();
     headers.add("Authorization", "Bearer " + token);
 
-    // when
-    // then
+    // When
+    // Then
     assertThat(
             mvc.put()
                 .uri("/api/user/change-password")
@@ -637,11 +635,11 @@ class UserControllerTest {
       username = "admin",
       authorities = {"USER_DELETE"})
   void shouldDeleteUser() {
-    // given
-    // when
+    // Given
+    // When
     User user = userRepository.findByUsername("user").orElseThrow();
 
-    // then
+    // Then
     assertThat(mvc.delete().uri("/api/user/{id}", user.getId())).hasStatusOk();
     assertTrue(userRepository.findByUsername("user").isEmpty());
   }

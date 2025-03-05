@@ -36,63 +36,63 @@ class JwtAuthenticationFilterTest {
 
   @Test
   void shouldIgnoreAuthEndpoints() throws ServletException, IOException {
-    // given
+    // Given
     given(request.getServletPath()).willReturn("/api/auth/login");
 
-    // when
+    // When
     jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-    // then
+    // Then
     verify(filterChain, times(1)).doFilter(request, response);
     verifyNoInteractions(jwtService, userDetailsService, tokenRepository);
   }
 
   @Test
   void shouldIgnoreRequestsWithoutAuthorizationHeader() throws ServletException, IOException {
-    // given
+    // Given
     given(request.getServletPath()).willReturn("/api/protected");
     given(request.getHeader("Authorization")).willReturn(null);
 
-    // when
+    // When
     jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-    // then
+    // Then
     verify(filterChain, times(1)).doFilter(request, response);
     verifyNoInteractions(jwtService, userDetailsService, tokenRepository);
   }
 
   @Test
   void shouldIgnoreRequestsWithWrongAuthorizationHeader() throws ServletException, IOException {
-    // given
+    // Given
     given(request.getServletPath()).willReturn("/api/protected");
     given(request.getHeader("Authorization")).willReturn("NotBearer");
 
-    // when
+    // When
     jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-    // then
+    // Then
     verify(filterChain, times(1)).doFilter(request, response);
     verifyNoInteractions(jwtService, userDetailsService, tokenRepository);
   }
 
   @Test
   void shouldIgnoreRequestsWithInvalidToken() throws ServletException, IOException {
-    // given
+    // Given
     given(request.getServletPath()).willReturn("/api/protected");
     given(request.getHeader("Authorization")).willReturn("Bearer invalid_token");
     given(jwtService.extractUsername("invalid_token")).willReturn(null);
 
-    // when
+    // When
     jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-    // then
+    // Then
     verify(filterChain, times(1)).doFilter(request, response);
     verifyNoInteractions(userDetailsService, tokenRepository);
   }
 
   @Test
   void shouldNotAuthenticateUserWithInvalidToken() throws ServletException, IOException {
-    // given
+    // Given
     String invalidToken = "not_valid_jwt";
     String username = "testUser";
     UserDetails userDetails = mock(User.class);
@@ -109,10 +109,10 @@ class JwtAuthenticationFilterTest {
         .willReturn(Optional.of(Token.builder().token(invalidToken).userId(1L).build()));
     given(jwtService.isTokenValid(invalidToken, userDetails)).willReturn(false);
 
-    // when
+    // When
     jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-    // then
+    // Then
     verify(filterChain, times(1)).doFilter(request, response);
     verify(securityContext, never())
         .setAuthentication(any(UsernamePasswordAuthenticationToken.class));
@@ -120,7 +120,7 @@ class JwtAuthenticationFilterTest {
 
   @Test
   void shouldAuthenticateUserWithValidToken() throws ServletException, IOException {
-    // given
+    // Given
     String validToken = "valid_jwt";
     String username = "testUser";
     UserDetails userDetails = mock(User.class);
@@ -137,10 +137,10 @@ class JwtAuthenticationFilterTest {
         .willReturn(Optional.of(Token.builder().token(validToken).userId(1L).build()));
     given(jwtService.isTokenValid(validToken, userDetails)).willReturn(true);
 
-    // when
+    // When
     jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-    // then
+    // Then
     verify(filterChain, times(1)).doFilter(request, response);
     verify(securityContext, times(1))
         .setAuthentication(any(UsernamePasswordAuthenticationToken.class));
