@@ -49,8 +49,7 @@ class AuthControllerTest {
   @Container
   static RabbitMQContainer rabbitMQContainer =
       new RabbitMQContainer("rabbitmq:3.13.2-management-alpine")
-          .withEnv("RABBITMQ_DEFAULT_USER", "rabbitmq")
-          .withEnv("RABBITMQ_DEFAULT_PASS", "Password1!")
+          .withAdminUser("rabbitmq")
           .withAdminPassword("Password1!");
 
   @Autowired private MockMvcTester mvc;
