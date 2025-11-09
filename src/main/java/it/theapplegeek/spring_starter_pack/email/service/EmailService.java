@@ -46,7 +46,7 @@ public class EmailService {
   }
 
   @SneakyThrows
-  @RabbitListener(queues = "q.email.simple-email", ackMode = "MANUAL")
+  @RabbitListener(queues = RabbitMqConfig.SIMPLE_EMAIL_QUEUE, ackMode = "MANUAL")
   public void handleTextMail(
       SimpleEmail simpleEmail, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
     try {
