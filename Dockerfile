@@ -5,7 +5,7 @@ RUN mvn -f /app/pom.xml dependency:go-offline
 COPY src /app/src
 RUN mvn -f /app/pom.xml package -DskipTests
 
-FROM openjdk:21-slim
+FROM amazoncorretto:21
 WORKDIR /app
 COPY --from=build /app/target/**.jar app.jar
 CMD ["java", "-jar", "app.jar"]
