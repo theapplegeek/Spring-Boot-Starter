@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.0</version>
+        <version>3.5.7</version>
         <relativePath/>
     </parent>
 
@@ -32,12 +32,13 @@
 
     <properties>
         <java.version>21</java.version>
-        <lombok.version>1.18.32</lombok.version>
-        <mapstruct.version>1.5.3.Final</mapstruct.version>
+        <lombok.version>1.18.42</lombok.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
-        <io.jsonwebtoken.version>0.12.5</io.jsonwebtoken.version>
+        <io.jsonwebtoken.version>0.13.0</io.jsonwebtoken.version>
         <com.github.javafaker.version>1.0.2</com.github.javafaker.version>
-        <spotless.version>2.43.0</spotless.version>
+        <spotless.version>3.0.0</spotless.version>
+        <mockito.version>5.20.0</mockito.version>
     </properties>
 
     <dependencies>
@@ -162,7 +163,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.14.2</version>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
